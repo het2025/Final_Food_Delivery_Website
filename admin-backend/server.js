@@ -22,7 +22,7 @@ connectDB();
 // CORS Configuration - FIXED
 const corsOptions = {
   origin: [
-    'http://localhost:5173',
+    'http://localhost:5175', // Admin frontend
     'http://localhost:3000',
     'http://localhost:5174',
     process.env.FRONTEND_URL
@@ -76,7 +76,7 @@ app.use((req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
