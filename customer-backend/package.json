@@ -1,0 +1,42 @@
+{
+  "name": "quickbites-backend",
+  "version": "1.0.0",
+  "description": "Backend API for QuickBites Food Delivery Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node data/seedRestaurants.js",
+    "seed:validate": "node data/seedRestaurants.js --validate",
+    "seed:delete": "node data/seedRestaurants.js --delete",
+    "cleanup-users": "node scripts/cleanupUsers.js"
+  },
+  "keywords": [
+    "food",
+    "delivery",
+    "api",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-async-handler": "^1.2.0",
+    "express-rate-limit": "^6.10.0",
+    "helmet": "^7.0.0",
+    "joi": "^17.9.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.5.0",
+    "morgan": "^1.10.0",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "typescript": "^5.9.3"
+  }
+}

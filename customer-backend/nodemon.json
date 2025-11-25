@@ -1,0 +1,14 @@
+{
+  "watch": ["."],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules/",
+    "firebaseServiceAccount.json",
+    "*.test.js",
+    "*.log",
+    "tmp/"
+  ],
+  "events": {
+    "restart": "echo 'nodemon restarted due to changes.'"
+  }
+}
