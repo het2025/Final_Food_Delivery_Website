@@ -30,7 +30,7 @@ const MenuItemSchema = new mongoose.Schema({
   url: {
     type: String,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return !v || /^https?:\/\/.+/.test(v);
       },
       message: 'Invalid image URL'
@@ -48,7 +48,7 @@ const MenuItemSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
-MenuItemSchema.pre('save', function(next) {
+MenuItemSchema.pre('save', function (next) {
   if (this.name) {
     this.lowercase = this.name.toLowerCase();
   }
@@ -72,7 +72,7 @@ const MenuCategorySchema = new mongoose.Schema({
   }
 }, { _id: false });
 
-MenuCategorySchema.pre('save', function(next) {
+MenuCategorySchema.pre('save', function (next) {
   if (this.category) {
     this.lowercase = this.category.toLowerCase();
   }
@@ -96,6 +96,12 @@ const RestaurantSchema = new mongoose.Schema({
     maxlength: [100, 'Name cannot exceed 100 characters']
   },
 
+  ownerName: {
+    type: String,
+    default: '',
+    trim: true
+  },
+
   description: {
     type: String,
     trim: true,
@@ -107,7 +113,7 @@ const RestaurantSchema = new mongoose.Schema({
     type: String,
     default: '',
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return !v || /^https?:\/\/.+/.test(v);
       },
       message: 'Invalid image URL'
@@ -164,7 +170,7 @@ const RestaurantSchema = new mongoose.Schema({
       type: [Number],
       default: [0, 0],
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           return !v || v.length === 2;
         },
         message: 'Coordinates must be [longitude, latitude]'
@@ -177,7 +183,7 @@ const RestaurantSchema = new mongoose.Schema({
       type: String,
       default: '',
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           return !v || /^[\+]?[0-9\-\s\(\)]+$/.test(v);
         },
         message: 'Invalid phone number format'
@@ -188,7 +194,7 @@ const RestaurantSchema = new mongoose.Schema({
       lowercase: true,
       default: '',
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           return !v || /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
         },
         message: 'Invalid email format'
@@ -302,7 +308,7 @@ RestaurantSchema.index({
 });
 
 // Pre-save middleware
-RestaurantSchema.pre('save', function(next) {
+RestaurantSchema.pre('save', function (next) {
   // Update searchableText
   const searchParts = [
     this.name,
@@ -348,11 +354,11 @@ RestaurantSchema.pre('save', function(next) {
 });
 
 // Virtuals
-RestaurantSchema.virtual('fullAddress').get(function() {
+RestaurantSchema.virtual('fullAddress').get(function () {
   return `${this.location.address}, ${this.location.area}`;
 });
 
-RestaurantSchema.virtual('popularItems').get(function() {
+RestaurantSchema.virtual('popularItems').get(function () {
   const popularItems = [];
   if (this.menu && this.menu.length > 0) {
     this.menu.forEach(category => {
@@ -370,7 +376,7 @@ RestaurantSchema.virtual('popularItems').get(function() {
 });
 
 // Static methods
-RestaurantSchema.statics.searchByDish = function(dishName, options = {}) {
+RestaurantSchema.statics.searchByDish = function (dishName, options = {}) {
   const { limit = 20, area, cuisine, minRating } = options;
 
   let query = {
@@ -394,7 +400,7 @@ RestaurantSchema.statics.searchByDish = function(dishName, options = {}) {
     .lean();
 };
 
-RestaurantSchema.statics.fuzzySearch = function(searchTerm, options = {}) {
+RestaurantSchema.statics.fuzzySearch = function (searchTerm, options = {}) {
   const { limit = 20 } = options;
 
   const patterns = [
@@ -422,13 +428,13 @@ RestaurantSchema.statics.fuzzySearch = function(searchTerm, options = {}) {
     isActive: true,
     $or: orConditions
   })
-  .select('-searchableText -dishNames -categoryNames -__v')
-  .sort({ rating: -1, totalReviews: -1 })
-  .limit(limit)
-  .lean();
+    .select('-searchableText -dishNames -categoryNames -__v')
+    .sort({ rating: -1, totalReviews: -1 })
+    .limit(limit)
+    .lean();
 };
 
-RestaurantSchema.methods.getDishesByCategory = function(categoryName) {
+RestaurantSchema.methods.getDishesByCategory = function (categoryName) {
   const matchingCategories = (this.menu || []).filter(category =>
     category.category && category.category.toLowerCase().includes(categoryName.toLowerCase())
   );

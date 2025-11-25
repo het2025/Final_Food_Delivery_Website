@@ -28,10 +28,11 @@ const syncRestaurant = async (req, res) => {
     const dataToSync = {
       restaurantId: restaurantData.restaurantId,
       name: restaurantData.name,
+      ownerName: restaurantData.ownerName || '', // ✅ ADDED: Save owner name
       description: restaurantData.description || `Welcome to ${restaurantData.name}!`,
       image: restaurantData.image || '',
-      cuisine: Array.isArray(restaurantData.cuisine) && restaurantData.cuisine.length > 0 
-        ? restaurantData.cuisine 
+      cuisine: Array.isArray(restaurantData.cuisine) && restaurantData.cuisine.length > 0
+        ? restaurantData.cuisine
         : ['Multi-Cuisine'],
       gstNumber: restaurantData.gstNumber || '',
       deliveryTime: restaurantData.deliveryTime || '30',
@@ -59,13 +60,13 @@ const syncRestaurant = async (req, res) => {
     console.log('✅ Data validated and defaults applied');
 
     // Check if restaurant already exists
-    const existing = await Restaurant.findOne({ 
-      restaurantId: dataToSync.restaurantId 
+    const existing = await Restaurant.findOne({
+      restaurantId: dataToSync.restaurantId
     });
 
     if (existing) {
       console.log('🔄 Restaurant exists, updating...');
-      
+
       const updated = await Restaurant.findOneAndUpdate(
         { restaurantId: dataToSync.restaurantId },
         { $set: dataToSync },
@@ -73,7 +74,7 @@ const syncRestaurant = async (req, res) => {
       );
 
       console.log('✅ Restaurant updated:', updated.name);
-      
+
       return res.json({
         success: true,
         data: updated,
@@ -83,9 +84,9 @@ const syncRestaurant = async (req, res) => {
 
     // Create new restaurant
     console.log('✨ Creating new restaurant...');
-    
+
     const newRestaurant = await Restaurant.create(dataToSync);
-    
+
     console.log('✅ ========================================');
     console.log('✅ NEW RESTAURANT CREATED IN CUSTOMER DB!');
     console.log('✅ ========================================');
@@ -105,18 +106,18 @@ const syncRestaurant = async (req, res) => {
     console.error('❌ ========================================');
     console.error('Error name:', error.name);
     console.error('Error message:', error.message);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(e => e.message);
       console.error('Validation errors:', messages);
-      
+
       return res.status(400).json({
         success: false,
         message: 'Validation failed: ' + messages.join(', '),
         errors: messages
       });
     }
-    
+
     if (error.code === 11000) {
       console.error('Duplicate key error - restaurant already exists');
       return res.status(409).json({
@@ -124,7 +125,7 @@ const syncRestaurant = async (req, res) => {
         message: 'Restaurant with this ID already exists'
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Failed to sync restaurant',
@@ -141,14 +142,14 @@ const getNewlyRegisteredRestaurants = async (req, res) => {
     // ✅ FIXED: Query ONLY the new_registered_restaurants collection directly
     const db = mongoose.connection.db;
     const newRestaurantsCollection = db.collection('new_registered_restaurants');
-    
+
     const restaurants = await newRestaurantsCollection.find({
       status: 'active',
       isActive: true
     })
-    .sort({ createdAt: -1 })
-    .limit(50)
-    .toArray();
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray();
 
     console.log(`✅ Found ${restaurants.length} newly registered restaurants from new_registered_restaurants collection`);
 

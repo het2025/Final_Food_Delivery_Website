@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ordersAPI } from '../api/adminApi';
-import { 
-  BuildingStorefrontIcon, 
+import {
+  BuildingStorefrontIcon,
   ShoppingCartIcon,
   CurrencyRupeeIcon,
   ChevronRightIcon,
@@ -25,7 +25,7 @@ const Orders = () => {
     try {
       setLoading(true);
       const response = await ordersAPI.getByRestaurant();
-      
+
       if (response.data.success) {
         setRestaurantOrders(response.data.data);
       }
@@ -50,7 +50,7 @@ const Orders = () => {
       try {
         setLoadingOrders({ ...loadingOrders, [restaurantId]: true });
         const response = await ordersAPI.getRestaurantOrders(restaurantId, 1, 50);
-        
+
         if (response.data.success) {
           setRestaurantOrderDetails({
             ...restaurantOrderDetails,
@@ -146,7 +146,9 @@ const Orders = () => {
                       <p className="text-xs text-gray-600">Completed</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-primary">₹{restaurant.totalRevenue.toFixed(2)}</p>
+                      <p className="text-2xl font-bold text-primary">
+                        ₹{(restaurant.totalRevenue || 0).toFixed(2)}
+                      </p>
                       <p className="text-xs text-gray-600">Revenue</p>
                     </div>
                   </div>

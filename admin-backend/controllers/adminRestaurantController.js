@@ -131,41 +131,100 @@ export const approveRestaurant = async (req, res) => {
     const restaurant = await newRestaurantsCollection.findOne({ _id: restaurantId });
 
     if (!restaurant) {
-      return res.status(404).json({
-        success: false,
-        message: 'Restaurant not found in pending list'
+      // Check if it was already moved to main collection (idempotency)
+      const alreadyApproved = await restaurantsCollection.findOne({ _id: restaurantId });
+      if (alreadyApproved) {
+        console.log(`Restaurant ${restaurantId} already in main collection. Skipping move.`);
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'Restaurant not found in pending list'
+        });
+      }
+    } else {
+      // Check if already exists in main collection (to handle retries/duplicates)
+      const existingRestaurant = await restaurantsCollection.findOne({
+        $or: [
+          { _id: restaurantId },
+          { restaurantId: restaurantId.toString() }
+        ]
       });
+
+      if (existingRestaurant) {
+        console.log(`Restaurant ${restaurantId} already exists in main collection. Updating instead of inserting.`);
+
+        // Update existing
+        await restaurantsCollection.updateOne(
+          { _id: existingRestaurant._id },
+          {
+            $set: {
+              status: 'active',
+              isActive: true,
+              approvedAt: new Date(),
+              approvedBy: req.admin._id
+            }
+          }
+        );
+      } else {
+        // Prepare approved restaurant data
+        const approvedRestaurant = {
+          ...restaurant,
+          approvedAt: new Date(),
+          approvedBy: req.admin._id,
+          status: 'active',
+          isActive: true
+        };
+
+        // Remove _id and restaurantId to avoid conflicts/duplicates
+        delete approvedRestaurant._id;
+        delete approvedRestaurant.restaurantId;
+
+        // Insert into main restaurants collection
+        await restaurantsCollection.insertOne({
+          _id: restaurantId, // Keep same ID
+          restaurantId: restaurantId.toString(), // Ensure unique restaurantId
+          ...approvedRestaurant
+        });
+      }
+
+      // Delete from new_registered_restaurants collection
+      await newRestaurantsCollection.deleteOne({ _id: restaurantId });
     }
 
-    // Prepare approved restaurant data
-    const approvedRestaurant = {
-      ...restaurant,
-      approvedAt: new Date(),
-      approvedBy: req.admin._id,
-      status: 'active',
-      isActive: true
-    };
+    // ✅ UPDATE RestaurantOwner in restaurant database
+    try {
+      const restaurantConn = mongoose.createConnection(process.env.RESTAURANT_DB_URI || process.env.MONGO_URI);
+      await restaurantConn.asPromise();
 
-    // Remove _id to let MongoDB generate new one (or keep same)
-    delete approvedRestaurant._id;
+      const RestaurantOwnerSchema = new mongoose.Schema({}, { strict: false });
+      const RestaurantOwner = restaurantConn.model('RestaurantOwner', RestaurantOwnerSchema);
 
-    // Insert into main restaurants collection
-    const insertResult = await restaurantsCollection.insertOne({
-      _id: restaurantId, // Keep same ID
-      ...approvedRestaurant
-    });
+      const ownerUpdate = await RestaurantOwner.updateOne(
+        { restaurant: restaurantId },
+        {
+          $set: {
+            isApproved: true,
+            approvedAt: new Date(),
+            approvedBy: req.admin._id
+          }
+        }
+      );
 
-    // Delete from new_registered_restaurants collection
-    await newRestaurantsCollection.deleteOne({ _id: restaurantId });
+      console.log(`✅ RestaurantOwner updated: ${ownerUpdate.modifiedCount} modified`);
+      await restaurantConn.close();
+    } catch (ownerError) {
+      console.error('⚠️ RestaurantOwner update error:', ownerError.message);
+      // Don't fail the whole approval if this fails
+    }
 
-    console.log(`Restaurant "${restaurant.name}" approved and moved to main collection`);
+    console.log(`Restaurant "${restaurantId}" approved and moved to main collection`);
 
     res.status(200).json({
       success: true,
       message: 'Restaurant approved successfully',
       data: {
         restaurantId,
-        restaurantName: restaurant.name
+        restaurantName: restaurant ? restaurant.name : 'Approved Restaurant'
       }
     });
   } catch (error) {
@@ -327,7 +386,7 @@ export const getRestaurantById = async (req, res) => {
     // Try to find in both collections
     let restaurant = await restaurantsCollection.findOne({ _id: restaurantId });
     let isNew = false;
-    
+
     if (!restaurant) {
       restaurant = await newRestaurantsCollection.findOne({ _id: restaurantId });
       isNew = true;

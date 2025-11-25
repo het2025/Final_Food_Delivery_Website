@@ -24,7 +24,7 @@ const restaurantOwnerSchema = new mongoose.Schema(
       trim: true,
       // ✅ FIX: Remove strict 10-digit validation to allow country codes
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           // Allow 10-13 digits with optional + and spaces
           return /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im.test(v.replace(/\s/g, ''));
         },
@@ -46,12 +46,32 @@ const restaurantOwnerSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    // Approval workflow fields
+    isApproved: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    approvedAt: {
+      type: Date
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin'
+    },
+    rejectedAt: {
+      type: Date
+    },
+    rejectionReason: {
+      type: String,
+      trim: true
+    },
     restaurant: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Restaurant'
     }
   },
-  { 
+  {
     timestamps: true,
     collection: 'restaurantowners'
   }
@@ -78,8 +98,8 @@ restaurantOwnerSchema.methods.comparePassword = async function (candidatePasswor
 // Generate JWT
 restaurantOwnerSchema.methods.getJwtToken = function () {
   return jwt.sign(
-    { id: this._id }, 
-    process.env.JWT_SECRET || 'default-secret-key-change-in-production', 
+    { id: this._id },
+    process.env.JWT_SECRET || 'default-secret-key-change-in-production',
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 };

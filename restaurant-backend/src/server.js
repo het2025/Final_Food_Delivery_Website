@@ -1,23 +1,48 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import http from 'http';
+import { Server } from 'socket.io';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
-import profileRoutes from './routes/profileRoutes.js'; 
-import menuRoutes from './routes/menuRoutes.js';  // ✅ ADD THIS
+import profileRoutes from './routes/profileRoutes.js';
+import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175', // Admin Frontend
+      'http://localhost:3174'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
+  }
+});
+
+// Make io available in routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 // CORS
 app.use(cors({
   origin: [
-    'http://localhost:3000',   
-    'http://localhost:5173',   
+    'http://localhost:3000',
+    'http://localhost:5173',
     'http://localhost:5174',
+    'http://localhost:5175', // Admin Frontend
     'http://localhost:3174'
   ],
   credentials: true,
@@ -51,7 +76,7 @@ console.log('✅ Auth routes mounted at /api/auth');
 app.use('/api/profile', profileRoutes);
 console.log('✅ Profile routes mounted at /api/profile');
 
-app.use('/api/menu', menuRoutes);  // ✅ ADD THIS LINE
+app.use('/api/menu', menuRoutes);
 console.log('✅ Menu routes mounted at /api/menu');
 
 app.use('/api/orders', orderRoutes);
@@ -63,9 +88,9 @@ console.log('✅ Dashboard routes mounted at /api/dashboard');
 // 404 Handler
 app.use('*', (req, res) => {
   console.log(`❌ 404: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({ 
-    success: false, 
-    message: `Route ${req.originalUrl} not found` 
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
@@ -87,11 +112,13 @@ const startServer = async () => {
     console.log('🔄 Connecting to MongoDB...');
     await connectDB();
     console.log('✅ MongoDB connected successfully');
-    
-    const server = app.listen(PORT, () => {
+
+    // Use server.listen instead of app.listen
+    server.listen(PORT, () => {
       console.log(`🚀 Restaurant Owner backend listening on port ${PORT}`);
       console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
       console.log(`🔐 Login endpoint: http://localhost:${PORT}/api/auth/login`);
+      console.log(`🔌 Socket.IO initialized on port ${PORT}`);
     });
 
     process.on('SIGTERM', () => {

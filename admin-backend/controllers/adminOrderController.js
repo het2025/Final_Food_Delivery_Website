@@ -31,52 +31,58 @@ export const getOrdersByRestaurant = async (req, res) => {
           _id: '$restaurant',
           restaurantName: { $first: '$restaurantName' },
           totalOrders: { $sum: 1 },
-          
+
           // Pending orders - match multiple possible statuses
           pendingOrders: {
-            $sum: { 
+            $sum: {
               $cond: [
-                { 
+                {
                   $in: [
-                    '$status', 
+                    '$status',
                     ['Pending', 'Confirmed', 'Preparing', 'Accepted', 'Out for Delivery']
-                  ] 
-                }, 
-                1, 
+                  ]
+                },
+                1,
                 0
-              ] 
+              ]
             }
           },
-          
+
           // Completed orders
           completedOrders: {
-            $sum: { 
-              $cond: [
-                { $eq: ['$status', 'Delivered'] }, 
-                1, 
-                0
-              ] 
-            }
-          },
-          
-          // Cancelled orders
-          cancelledOrders: {
-            $sum: { 
-              $cond:[
-                { 
-                  $in: ['$status', ['Cancelled', 'Rejected']] 
-                }, 
-                1, 
-                0
-              ] 
-            }
-          },
-          
-          // Total revenue - try multiple field names
-          totalRevenue: {
             $sum: {
               $cond: [
                 { $eq: ['$status', 'Delivered'] },
+                1,
+                0
+              ]
+            }
+          },
+
+          // Cancelled orders
+          cancelledOrders: {
+            $sum: {
+              $cond: [
+                {
+                  $in: ['$status', ['Cancelled', 'Rejected']]
+                },
+                1,
+                0
+              ]
+            }
+          },
+
+          // Total revenue - Sum all orders except Cancelled/Rejected
+          totalRevenue: {
+            $sum: {
+              $cond: [
+                {
+                  $not: [
+                    {
+                      $in: ['$status', ['Cancelled', 'Rejected']]
+                    }
+                  ]
+                },
                 {
                   $ifNull: [
                     '$total',
@@ -87,7 +93,7 @@ export const getOrdersByRestaurant = async (req, res) => {
               ]
             }
           },
-          
+
           // Last order date
           lastOrderDate: { $max: { $ifNull: ['$createdAt', '$orderTime'] } }
         }
@@ -98,7 +104,7 @@ export const getOrdersByRestaurant = async (req, res) => {
     ]).toArray();
 
     console.log(`Found ${restaurantOrders.length} restaurants with orders`);
-    
+
     // Log revenue details for debugging
     restaurantOrders.forEach(r => {
       console.log(`${r.restaurantName}: Total=${r.totalOrders}, Completed=${r.completedOrders}, Revenue=₹${r.totalRevenue}`);
@@ -325,7 +331,7 @@ export const updateOrderStatus = async (req, res) => {
     const { status, notes } = req.body;
 
     const validStatuses = [
-      'Pending', 'Accepted', 'Rejected', 'Confirmed', 
+      'Pending', 'Accepted', 'Rejected', 'Confirmed',
       'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'
     ];
 

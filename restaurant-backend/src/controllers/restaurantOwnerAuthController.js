@@ -15,51 +15,51 @@ export const registerRestaurantOwner = async (req, res) => {
 
     // ✅ Validation
     if (!name || !email || !password || !phone) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Name, email, password, and phone are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, password, and phone are required'
       });
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Password must be at least 6 characters' 
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters'
       });
     }
 
     if (!restaurant || !restaurant.name) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Restaurant name is required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Restaurant name is required'
       });
     }
 
     if (!restaurant.location || !restaurant.location.area || !restaurant.location.address) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Restaurant location (area and address) is required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Restaurant location (area and address) is required'
       });
     }
 
     // ✅ Check existing user
-    const existingOwner = await RestaurantOwner.findOne({ 
-      $or: [{ email }, { phone }] 
+    const existingOwner = await RestaurantOwner.findOne({
+      $or: [{ email }, { phone }]
     });
-    
+
     if (existingOwner) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `User with this ${existingOwner.email === email ? 'email' : 'phone'} already exists` 
+      return res.status(400).json({
+        success: false,
+        message: `User with this ${existingOwner.email === email ? 'email' : 'phone'} already exists`
       });
     }
 
     // ✅ Create Restaurant Owner
     console.log('Creating restaurant owner...');
-    const restaurantOwner = await RestaurantOwner.create({ 
-      name: name.trim(), 
-      email: email.trim().toLowerCase(), 
-      password, 
+    const restaurantOwner = await RestaurantOwner.create({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
       phone: phone.trim()
     });
 
@@ -130,13 +130,14 @@ export const registerRestaurantOwner = async (req, res) => {
     console.log('🔄 ========================================');
     console.log('🔄 STARTING AUTO-SYNC TO CUSTOMER DATABASE');
     console.log('🔄 ========================================');
-    
+
     const syncStartTime = Date.now();
-    
+
     try {
       const customerDBPayload = {
         restaurantId: newRestaurant._id.toString(),
         name: newRestaurant.name,
+        ownerName: restaurantOwner.name, // ✅ ADDED: Owner name for admin panel
         description: newRestaurant.description,
         image: newRestaurant.image,
         cuisine: cuisineArray,
@@ -167,14 +168,14 @@ export const registerRestaurantOwner = async (req, res) => {
 
       const CUSTOMER_BACKEND_URL = process.env.CUSTOMER_BACKEND_URL || 'http://localhost:5000';
       const syncUrl = `${CUSTOMER_BACKEND_URL}/api/restaurants/sync`;
-      
+
       console.log('🌐 Syncing to:', syncUrl);
       console.log('⏱️  Timeout: 15 seconds');
 
       const syncResponse = await axios.post(
         syncUrl,
         customerDBPayload,
-        { 
+        {
           timeout: 15000, // ✅ INCREASED: from 10s to 15s
           headers: {
             'Content-Type': 'application/json'
@@ -199,16 +200,16 @@ export const registerRestaurantOwner = async (req, res) => {
       }
     } catch (syncError) {
       const syncDuration = Date.now() - syncStartTime;
-      
+
       console.error('❌ ========================================');
       console.error('❌ SYNC FAILED AFTER', syncDuration, 'ms');
       console.error('❌ ========================================');
       console.error('Error type:', syncError.name);
       console.error('Error message:', syncError.message);
-      
+
       if (syncError.code) {
         console.error('Error code:', syncError.code);
-        
+
         if (syncError.code === 'ECONNREFUSED') {
           console.error('💡 SOLUTION: Customer backend is not running!');
           console.error('💡 Start it with: cd customer-backend && npm start');
@@ -216,7 +217,7 @@ export const registerRestaurantOwner = async (req, res) => {
           console.error('💡 SOLUTION: Customer backend is too slow or not responding');
         }
       }
-      
+
       if (syncError.response) {
         console.error('Response status:', syncError.response.status);
         console.error('Response data:', syncError.response.data);
@@ -228,24 +229,35 @@ export const registerRestaurantOwner = async (req, res) => {
           message: "Customer DB sync failed: " + syncError.response.data.message
         });
       }
-      
+
       console.warn('⚠️ Registration completed but sync failed');
       console.warn('⚠️ Restaurant needs manual sync to Customer DB');
     }
 
-    // ✅ Generate token
-    const token = restaurantOwner.getJwtToken();
+    // ✅ Emit socket event for real-time updates
+    if (req.io) {
+      req.io.emit('restaurant_registered', {
+        message: 'New restaurant registration request',
+        restaurant: {
+          id: newRestaurant._id,
+          name: newRestaurant.name,
+          owner: restaurantOwner.name,
+          registeredAt: new Date()
+        }
+      });
+      console.log('📡 Emitted restaurant_registered event');
+    }
 
-    // ✅ Success response
+    // ✅ Success response - NO TOKEN until approved
     res.status(201).json({
       success: true,
-      token,
-      data: { 
+      data: {
         user: {
           id: restaurantOwner._id,
           name: restaurantOwner.name,
           email: restaurantOwner.email,
-          phone: restaurantOwner.phone
+          phone: restaurantOwner.phone,
+          isApproved: false
         },
         restaurant: {
           id: newRestaurant._id,
@@ -254,16 +266,17 @@ export const registerRestaurantOwner = async (req, res) => {
           status: newRestaurant.status
         }
       },
-      message: 'Registration successful! Welcome to QuickBite.'
+      message: 'Registration submitted successfully! Please wait for admin approval.',
+      requiresApproval: true
     });
 
   } catch (error) {
     console.error('❌ Registration error:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         message: messages.join(', '),
         error: error.message
       });
@@ -271,14 +284,14 @@ export const registerRestaurantOwner = async (req, res) => {
 
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern || {})[0] || 'field';
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         message: `This ${field} is already registered`
       });
     }
 
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Registration failed. Please try again.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -300,6 +313,26 @@ export const loginRestaurantOwner = async (req, res) => {
     if (!restaurantOwner || !(await restaurantOwner.comparePassword(password))) {
       console.log('Invalid credentials for:', email);
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // ✅ Check if account is approved
+    if (!restaurantOwner.isApproved) {
+      console.log('Login blocked - pending approval:', email);
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is pending admin approval. You will be able to login once your restaurant is approved by QuickBite. This usually takes 24-48 hours.',
+        pendingApproval: true
+      });
+    }
+
+    // ✅ Check if account is active
+    if (!restaurantOwner.isActive) {
+      console.log('Login blocked - account deactivated:', email);
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact QuickBite support for assistance.',
+        accountDeactivated: true
+      });
     }
 
     const token = restaurantOwner.getJwtToken();

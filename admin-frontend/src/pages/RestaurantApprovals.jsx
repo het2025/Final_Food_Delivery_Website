@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { restaurantsAPI } from '../api/adminApi';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { io } from 'socket.io-client';
 
 const RestaurantApprovals = () => {
   const [pendingRestaurants, setPendingRestaurants] = useState([]);
@@ -9,13 +10,30 @@ const RestaurantApprovals = () => {
 
   useEffect(() => {
     fetchPendingRestaurants();
+
+    // ✅ Connect to Restaurant Backend Socket (Port 5001)
+    const socket = io('http://localhost:5001');
+
+    socket.on('connect', () => {
+      console.log('🔌 Connected to Restaurant Backend Socket');
+    });
+
+    socket.on('restaurant_registered', (data) => {
+      console.log('🔔 New restaurant registration received:', data);
+      // Refresh the list automatically
+      fetchPendingRestaurants();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const fetchPendingRestaurants = async () => {
     try {
       setLoading(true);
       const response = await restaurantsAPI.getPending();
-      
+
       if (response.data.success) {
         setPendingRestaurants(response.data.data);
       }
@@ -34,7 +52,7 @@ const RestaurantApprovals = () => {
     try {
       setActionLoading(restaurantId);
       const response = await restaurantsAPI.approve(restaurantId);
-      
+
       if (response.data.success) {
         alert('Restaurant approved successfully!');
         fetchPendingRestaurants();
@@ -49,7 +67,7 @@ const RestaurantApprovals = () => {
 
   const handleReject = async (restaurantId, restaurantName) => {
     const reason = prompt(`Reject "${restaurantName}"?\n\nPlease provide a reason:`);
-    
+
     if (!reason) {
       return;
     }
@@ -57,7 +75,7 @@ const RestaurantApprovals = () => {
     try {
       setActionLoading(restaurantId);
       const response = await restaurantsAPI.reject(restaurantId, reason);
-      
+
       if (response.data.success) {
         alert('Restaurant rejected');
         fetchPendingRestaurants();
@@ -116,7 +134,7 @@ const RestaurantApprovals = () => {
                     <div className="flex-1 ml-6">
                       <h3 className="text-xl font-bold text-gray-800">{restaurant.name}</h3>
                       <p className="mt-1 text-gray-600">{restaurant.description}</p>
-                      
+
                       <div className="grid grid-cols-2 gap-4 mt-4">
                         <div>
                           <p className="text-sm text-gray-500">Owner</p>
@@ -124,7 +142,7 @@ const RestaurantApprovals = () => {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Contact</p>
-                          <p className="font-medium text-gray-800">{restaurant.phone || 'N/A'}</p>
+                          <p className="font-medium text-gray-800">{restaurant.contact?.phone || restaurant.phone || 'N/A'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Location</p>
@@ -135,7 +153,7 @@ const RestaurantApprovals = () => {
                         <div>
                           <p className="text-sm text-gray-500">Cuisine</p>
                           <p className="font-medium text-gray-800">
-                            {restaurant.cuisines?.join(', ') || 'N/A'}
+                            {restaurant.cuisine?.join(', ') || restaurant.cuisines?.join(', ') || 'N/A'}
                           </p>
                         </div>
                       </div>
