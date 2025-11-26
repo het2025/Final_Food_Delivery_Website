@@ -173,15 +173,79 @@ export const updateRestaurantOwnerOrderStatus = async (req, res) => {
 
     console.log('✅ Order status updated successfully to:', status);
 
+    // Retrieve the updated order to get originalOrderId
+    const updatedOrder = updateResult.value;
+    const remoteOrderId = updatedOrder.originalOrderId; 
+
+    // ✅ NEW: Trigger Delivery Order Creation if status is 'Ready'
+    if (status === 'Ready') {
+      try {
+        console.log('🚀 Status is Ready - Initiating Delivery Order Creation...');
+        
+        // 1. Get Restaurant Details for Location
+        const restaurantDetails = await Restaurant.findById(restaurantId);
+        
+        if (!restaurantDetails) {
+             console.error('❌ Critical: Restaurant details not found for delivery creation');
+        } else {
+            const DELIVERY_BACKEND_URL = process.env.DELIVERY_BACKEND_URL || 'http://localhost:5003';
+            
+            // 2. Construct Payload
+            const deliveryPayload = {
+              orderId: updatedOrder.originalOrderId || updatedOrder._id.toString(), // Prefer original ID
+              orderNumber: updatedOrder.orderNumber,
+              restaurant: restaurantId,
+              restaurantName: restaurantDetails.name,
+              restaurantLocation: restaurantDetails.location, // { address, coordinates }
+              customer: updatedOrder.userId, // Customer ID
+              customerName: updatedOrder.customerName || 'Customer',
+              customerPhone: updatedOrder.customerPhone || '',
+              deliveryAddress: updatedOrder.deliveryAddress, // Now an object
+              orderAmount: updatedOrder.totalAmount,
+              deliveryFee: updatedOrder.deliveryFee || 0,
+              distance: updatedOrder.deliveryDistance || 0,
+              estimatedDeliveryTime: 30 // Default or calculate
+            };
+
+            console.log('📦 Sending payload to Delivery Backend:', JSON.stringify(deliveryPayload, null, 2));
+
+            // 3. Call Delivery Backend
+            const deliveryResponse = await axios.post(
+              `${DELIVERY_BACKEND_URL}/api/delivery/orders/create`,
+              deliveryPayload,
+              { timeout: 5000 }
+            );
+
+            if (deliveryResponse.data.success) {
+              console.log('✅✅✅ Delivery Order Created Successfully!');
+            } else {
+              console.warn('⚠️ Delivery Backend returned success: false', deliveryResponse.data);
+            }
+        }
+      } catch (deliveryError) {
+        console.error('❌ Failed to create delivery order:', deliveryError.message);
+        if (deliveryError.response) {
+            console.error('   Response data:', deliveryError.response.data);
+        }
+      }
+    }
+
+    if (!remoteOrderId) {
+      console.warn('⚠️ No originalOrderId found for order. Cannot sync to customer-backend correctly.');
+      // We might still try with 'id' but it will likely fail if IDs are different.
+      // For now, we proceed but log the warning.
+    }
+
     // ✅ Sync status update to customer-backend
     // This is crucial for 'Ready' status to trigger delivery notification!
     try {
       const CUSTOMER_BACKEND_URL = process.env.CUSTOMER_BACKEND_URL || 'http://localhost:5000';
+      const targetId = remoteOrderId || id;
 
-      console.log(`📡 Syncing status '${status}' to customer-backend for order ${id}...`);
+      console.log(`📡 Syncing status '${status}' to customer-backend for order ${targetId}...`);
 
       const syncResponse = await axios.put(
-        `${CUSTOMER_BACKEND_URL}/api/orders/${id}/update-status`,
+        `${CUSTOMER_BACKEND_URL}/api/orders/${targetId}/update-status`,
         { status: status },
         { timeout: 5000 }
       );
@@ -293,6 +357,7 @@ export const receiveOrderFromCustomer = async (req, res) => {
       userId: customerId,
       restaurant: restaurantId,
       orderNumber: orderNumber,
+      originalOrderId: orderId, // ✅ Save original order ID
       items: items.map(item => ({
         menuItemId: item.menuItem || null,
         name: item.name,
@@ -302,7 +367,10 @@ export const receiveOrderFromCustomer = async (req, res) => {
       totalAmount: total,
       paymentMethod: paymentMethod.toLowerCase(),
       status: 'pending', // lowercase to match enum
-      deliveryAddress: `${deliveryAddress.street}, ${deliveryAddress.city}, ${deliveryAddress.state} - ${deliveryAddress.pincode}`,
+      // ✅ CHANGED: Save full address object and fee
+      deliveryAddress: deliveryAddress, 
+      deliveryFee: deliveryFee || 0,
+      deliveryDistance: 0, // Default as not sent by customer-backend yet
       notes: instructions || '',
       customerName: customerName,
       customerPhone: customerPhone
@@ -337,9 +405,20 @@ export const acceptOrder = async (req, res) => {
 
     console.log('✅ Restaurant accepting order:', id);
 
+    // Fetch order to get originalOrderId
+    const db = mongoose.connection.db;
+    const ordersCollection = db.collection('orders');
+    const order = await ordersCollection.findOne({ _id: new mongoose.Types.ObjectId(id) });
+
+    if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const targetId = order.originalOrderId || id;
+
     // Update order status in customer backend
     const updateResponse = await axios.put(
-      `http://localhost:5000/api/orders/${id}/update-status`,
+      `http://localhost:5000/api/orders/${targetId}/update-status`,
       {
         status: 'Accepted',
         acceptedAt: new Date()
@@ -377,8 +456,19 @@ export const rejectOrder = async (req, res) => {
 
     console.log('❌ Restaurant rejecting order:', id);
 
+    // Fetch order to get originalOrderId
+    const db = mongoose.connection.db;
+    const ordersCollection = db.collection('orders');
+    const order = await ordersCollection.findOne({ _id: new mongoose.Types.ObjectId(id) });
+
+    if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const targetId = order.originalOrderId || id;
+
     const updateResponse = await axios.put(
-      `http://localhost:5000/api/orders/${id}/update-status`,
+      `http://localhost:5000/api/orders/${targetId}/update-status`,
       {
         status: 'Rejected',
         rejectedAt: new Date(),

@@ -565,6 +565,30 @@ exports.validateCoupon = async (req, res) => {
   }
 };
 
+// Get all orders with status 'Ready' (Internal use for Delivery Backend)
+exports.getReadyOrders = async (req, res) => {
+  try {
+    // In a real app, you should verify this request comes from a trusted service (e.g. via API Key)
+    const orders = await Order.find({ status: 'Ready' })
+      .populate('restaurant', 'name location address') // Populate restaurant details
+      .populate('customer', 'name phone') // Populate customer details
+      .sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders
+    });
+  } catch (error) {
+    console.error('Get ready orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching ready orders',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createOrder: exports.createOrder,
   getMyOrders: exports.getMyOrders,
@@ -572,5 +596,6 @@ module.exports = {
   cancelOrder: exports.cancelOrder,
   rateOrder: exports.rateOrder,
   updateOrderStatus: exports.updateOrderStatus,
-  validateCoupon: exports.validateCoupon
+  validateCoupon: exports.validateCoupon,
+  getReadyOrders: exports.getReadyOrders
 };

@@ -8,14 +8,14 @@ const {
   cancelOrder, 
   rateOrder,
   updateOrderStatus,
-  validateCoupon
+  validateCoupon,
+  getReadyOrders
 } = require('../controllers/orderController');
 
 const { protect } = require('../middleware/authMiddleware');
 
-// ✅ Route called by restaurant backend (no auth required)
-// PUT /api/orders/:id/update-status
-router.put('/:id/update-status', updateOrderStatus);
+// Internal route to get ready orders (for delivery polling)
+router.get('/internal/ready', getReadyOrders);
 
 // All following routes require authentication
 router.use(protect);

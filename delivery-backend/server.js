@@ -5,6 +5,8 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { connectDB } from './config/database.js';
 import { setupOrderSocket } from './socket/orderSocket.js';
+import axios from 'axios';
+import { DeliveryOrder } from './models/DeliveryOrder.js';
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
@@ -108,5 +110,71 @@ process.on('unhandledRejection', (err) => {
   console.error('Unhandled Promise Rejection:', err);
   process.exit(1);
 });
+
+// Polling Service: Fetch Ready orders from Customer Backend
+const pollReadyOrders = async () => {
+  try {
+    const CUSTOMER_BACKEND_URL = process.env.CUSTOMER_BACKEND_URL || 'http://localhost:5000';
+    
+    // Fetch orders with status 'Ready'
+    const response = await axios.get(`${CUSTOMER_BACKEND_URL}/api/orders/internal/ready`);
+    
+    if (response.data.success && response.data.data.length > 0) {
+      const readyOrders = response.data.data;
+      
+      for (const order of readyOrders) {
+        // Check if we already have this order
+        const exists = await DeliveryOrder.findOne({ orderId: order._id });
+        
+        if (!exists) {
+          console.log(`📥 Polling found new ready order: ${order.orderNumber}`);
+          
+          // Create Delivery Order
+          const deliveryOrder = new DeliveryOrder({
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            restaurant: order.restaurant._id,
+            restaurantName: order.restaurant.name,
+            restaurantLocation: order.restaurant.location,
+            customer: order.customer._id,
+            customerName: order.customer.name || 'Customer',
+            customerPhone: order.customer.phone || '',
+            deliveryAddress: order.deliveryAddress, // Ensure this is object in customer-backend response
+            orderAmount: order.total,
+            deliveryFee: order.deliveryFee || 0,
+            distance: order.deliveryDistance || 0,
+            estimatedDeliveryTime: 30,
+            status: 'ready_for_pickup'
+          });
+
+          await deliveryOrder.save();
+          console.log(`✅ Created delivery order from polling: ${deliveryOrder._id}`);
+          
+          // Notify delivery boys via Socket
+          if (io) {
+             io.emit('new:order', {
+                orderId: deliveryOrder._id,
+                orderNumber: deliveryOrder.orderNumber,
+                restaurantName: deliveryOrder.restaurantName,
+                deliveryAddress: deliveryOrder.deliveryAddress,
+                orderAmount: deliveryOrder.orderAmount,
+                deliveryFee: deliveryOrder.deliveryFee,
+                distance: deliveryOrder.distance
+             });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // Silent fail for polling errors to avoid log spam, unless critical
+    if (error.code !== 'ECONNREFUSED') {
+        console.error('Polling error:', error.message);
+    }
+  }
+};
+
+// Start polling every 10 seconds
+setInterval(pollReadyOrders, 10000);
+console.log('🔄 Order Polling Service started (10s interval)');
 
 export { io };

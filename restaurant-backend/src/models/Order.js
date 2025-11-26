@@ -27,12 +27,19 @@ const orderSchema = new mongoose.Schema(
       enum: ['pending', 'accepted', 'preparing', 'ready', 'out-for-delivery', 'delivered', 'cancelled'],
       default: 'pending'
     },
-    deliveryAddress: { type: String },
+    // ✅ CHANGED: Store full address object for delivery backend
+    deliveryAddress: { type: Object }, 
+    deliveryFee: { type: Number, default: 0 },
+    deliveryDistance: { type: Number, default: 0 },
+    
     notes: { type: String },
     
     // ✅ NEW: Customer information
     customerName: { type: String },
-    customerPhone: { type: String }
+    customerPhone: { type: String },
+    
+    // ✅ NEW: Store original order ID from customer-backend
+    originalOrderId: { type: String }
   },
   { timestamps: true, collection: 'orders' }
 );
