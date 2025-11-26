@@ -60,7 +60,8 @@ export const registerRestaurantOwner = async (req, res) => {
       name: name.trim(),
       email: email.trim().toLowerCase(),
       password,
-      phone: phone.trim()
+      phone: phone.trim(),
+      isApproved: false  // ✅ NEW: Requires admin approval
     });
 
     // Prevent duplicate restaurants for a given owner
@@ -308,7 +309,8 @@ export const loginRestaurantOwner = async (req, res) => {
       id: restaurantOwner._id,
       name: restaurantOwner.name,
       email: restaurantOwner.email,
-      phone: restaurantOwner.phone
+      phone: restaurantOwner.phone,
+      isApproved: restaurantOwner.isApproved || false  // ✅ NEW: Include approval status
     };
 
     console.log('Login successful for:', email);
@@ -338,7 +340,8 @@ export const getCurrentRestaurantOwner = async (req, res) => {
       email: restaurantOwner.email,
       phone: restaurantOwner.phone,
       role: restaurantOwner.role,
-      isActive: restaurantOwner.isActive
+      isActive: restaurantOwner.isActive,
+      isApproved: restaurantOwner.isApproved || false  // ✅ NEW: Include approval status
     };
 
     res.json({ success: true, data: user });

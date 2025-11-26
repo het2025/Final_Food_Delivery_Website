@@ -19,6 +19,7 @@ import RestaurantOwnerDashboardPage from './components/pages/RestaurantOwnerDash
 import RestaurantOwnerOrdersPage from './components/pages/RestaurantOwnerOrdersPage';
 import ProfileSettings from './components/pages/ProfileSettings';
 import RestaurantOwnerMenuManagementPage from './components/pages/RestaurantOwnerMenuManagementPage';
+import WithApprovalCheck from './components/WithApprovalCheck'; // ✅ NEW: Approval check wrapper
 // Protected route
 import ProtectedRestaurantOwnerRoute from './routes/ProtectedVendorRoute';
 import './index.css';
@@ -41,16 +42,32 @@ function AppRoutes({ toggleModal, toggleLoginModal }) {
       <Route element={<ProtectedRestaurantOwnerRoute />}>
         <Route path="/dashboard" element={<RestaurantOwnerSidebarLayout />}>
           {/* Dashboard home */}
-          <Route index element={<RestaurantOwnerDashboardPage />} />
-          
+          <Route index element={
+            <WithApprovalCheck>
+              <RestaurantOwnerDashboardPage />
+            </WithApprovalCheck>
+          } />
+
           {/* Orders */}
-          <Route path="orders" element={<RestaurantOwnerOrdersPage />} />
-          
+          <Route path="orders" element={
+            <WithApprovalCheck>
+              <RestaurantOwnerOrdersPage />
+            </WithApprovalCheck>
+          } />
+
           {/* Menu Management */}
-          <Route path="menu" element={<RestaurantOwnerMenuManagementPage />} />
-          
+          <Route path="menu" element={
+            <WithApprovalCheck>
+              <RestaurantOwnerMenuManagementPage />
+            </WithApprovalCheck>
+          } />
+
           {/* Profile Settings */}
-          <Route path="profile" element={<ProfileSettings />} />
+          <Route path="profile" element={
+            <WithApprovalCheck>
+              <ProfileSettings />
+            </WithApprovalCheck>
+          } />
         </Route>
       </Route>
 

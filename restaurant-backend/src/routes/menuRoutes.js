@@ -12,6 +12,7 @@ import {
   fixCategoryLinks
 } from '../controllers/restaurantOwnerMenuController.js';
 import { authRestaurantOwner } from '../middleware/restaurantOwnerAuth.js';  // ✅ FIXED: Use correct auth middleware
+import { checkApproval } from '../middleware/checkApproval.js';  // ✅ NEW: Check approval status
 
 const router = express.Router();
 
@@ -19,19 +20,19 @@ const router = express.Router();
 router.use(authRestaurantOwner);
 
 // ========== CATEGORIES ==========
-router.get('/categories', getMenuCategories);
-router.post('/categories', createMenuCategory);
-router.put('/categories/:id', updateMenuCategory);
-router.delete('/categories/:id', deleteMenuCategory);
-router.post('/categories/link', linkCategoriesToRestaurant);
-router.post('/categories/fix', fixCategoryLinks);
+router.get('/categories', getMenuCategories);  // Read-only, no approval needed
+router.post('/categories', checkApproval, createMenuCategory);  // ✅ Requires approval
+router.put('/categories/:id', checkApproval, updateMenuCategory);  // ✅ Requires approval
+router.delete('/categories/:id', checkApproval, deleteMenuCategory);  // ✅ Requires approval
+router.post('/categories/link', checkApproval, linkCategoriesToRestaurant);  // ✅ Requires approval
+router.post('/categories/fix', checkApproval, fixCategoryLinks);  // ✅ Requires approval
 
 
 
 // ========== ITEMS ==========
-router.get('/items', getMenuItems);
-router.post('/items', createMenuItem);
-router.put('/items/:id', updateMenuItem);
-router.delete('/items/:id', deleteMenuItem);
+router.get('/items', getMenuItems);  // Read-only, no approval needed
+router.post('/items', checkApproval, createMenuItem);  // ✅ Requires approval
+router.put('/items/:id', checkApproval, updateMenuItem);  // ✅ Requires approval
+router.delete('/items/:id', checkApproval, deleteMenuItem);  // ✅ Requires approval
 
 export default router;

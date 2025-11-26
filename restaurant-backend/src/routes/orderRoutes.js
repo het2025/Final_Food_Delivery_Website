@@ -8,6 +8,7 @@ import {
   acceptOrder
 } from '../controllers/restaurantOwnerOrderController.js';
 import { authRestaurantOwner } from '../middleware/restaurantOwnerAuth.js';
+import { checkApproval } from '../middleware/checkApproval.js';  // ✅ NEW: Check approval status
 
 const router = express.Router();
 
@@ -18,17 +19,17 @@ router.post('/receive', receiveOrderFromCustomer);
 router.use(authRestaurantOwner);
 
 // GET /api/restaurant/orders
-router.get('/', getRestaurantOwnerOrders);
+router.get('/', getRestaurantOwnerOrders);  // Read-only, no approval needed
 
 // GET /api/restaurant/orders/:id
-router.get('/:id', getRestaurantOwnerOrderById);
+router.get('/:id', getRestaurantOwnerOrderById);  // Read-only, no approval needed
 
 // PUT /api/restaurant/orders/:id/status
-router.put('/:id/status', updateRestaurantOwnerOrderStatus);
+router.put('/:id/status', checkApproval, updateRestaurantOwnerOrderStatus);  // ✅ Requires approval
 
 // Add these new routes at the end
-router.put('/:id/accept', updateRestaurantOwnerOrderStatus);  // Existing
-router.put('/:id/reject', rejectOrder);  // ✅ NEW - Add this import and route
+router.put('/:id/accept', checkApproval, updateRestaurantOwnerOrderStatus);  // ✅ Requires approval
+router.put('/:id/reject', checkApproval, rejectOrder);  // ✅ Requires approval
 
 
 export default router;
