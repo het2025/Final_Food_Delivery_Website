@@ -13,10 +13,11 @@ const getRestaurant = async (restaurantOwnerId) => {
 export const getMenuCategories = async (req, res) => {
   try {
     const restaurantOwnerId = req.restaurantOwner.id;
-    
+
     const restaurant = await getRestaurant(restaurantOwnerId);
 
     if (!restaurant) {
+      console.warn('⚠️ getMenuCategories: No restaurant found for owner:', restaurantOwnerId);
       return res.json({
         success: true,
         data: [],
@@ -24,9 +25,11 @@ export const getMenuCategories = async (req, res) => {
       });
     }
 
+    console.log('✅ getMenuCategories: Found restaurant:', restaurant._id, 'Name:', restaurant.name);
+
     // ✅ Extract unique categories from embedded menu
     let existingCategories = [];
-    
+
     if (restaurant.menu && Array.isArray(restaurant.menu)) {
       // Check if menu uses category structure (new format)
       if (restaurant.menu.length > 0 && restaurant.menu[0].category) {
@@ -50,11 +53,11 @@ export const getMenuCategories = async (req, res) => {
 
     // Combine existing + defaults (remove duplicates)
     const allCategories = [...new Set([...existingCategories, ...defaultCategories])];
-    
+
     // ✅ Filter out any invalid category names
-    const validCategories = allCategories.filter(name => 
-      name && 
-      name.trim() !== '' && 
+    const validCategories = allCategories.filter(name =>
+      name &&
+      name.trim() !== '' &&
       !name.startsWith('cat_')  // Remove any cat_0, cat_1, etc.
     );
 
@@ -94,8 +97,8 @@ export const createMenuCategory = async (req, res) => {
       message: 'Categories are managed automatically through menu items'
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to create category'
     });
   }
@@ -170,15 +173,15 @@ export const createMenuItem = async (req, res) => {
   console.log('👤 Restaurant Owner ID:', req.restaurantOwner?.id);
   try {
     const restaurantOwnerId = req.restaurantOwner.id;
-    const { 
-      name, 
-      description, 
-      price, 
-      category, 
-      isVeg = true, 
-      isPopular = false, 
+    const {
+      name,
+      description,
+      price,
+      category,
+      isVeg = true,
+      isPopular = false,
       image = '',
-      preparationTime = 15 
+      preparationTime = 15
     } = req.body;
 
     console.log('📥 Received menu item data:', { name, category, price, isVeg });
@@ -186,9 +189,9 @@ export const createMenuItem = async (req, res) => {
     // Validate required fields
     if (!name || !price || !category) {
       console.log('❌ Missing required fields');
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Name, price, and category are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Name, price, and category are required'
       });
     }
 
@@ -197,9 +200,9 @@ export const createMenuItem = async (req, res) => {
 
     if (!restaurant) {
       console.log('❌ No restaurant found');
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No restaurant found. Create your restaurant profile first.' 
+      return res.status(400).json({
+        success: false,
+        message: 'No restaurant found. Create your restaurant profile first.'
       });
     }
 
@@ -227,29 +230,29 @@ export const createMenuItem = async (req, res) => {
     console.log('📦 New item object:', newItem);
 
     // Find existing category or create new one
-    let categoryIndex = restaurant.menu.findIndex(cat => 
+    let categoryIndex = restaurant.menu.findIndex(cat =>
       cat.category && cat.category.trim() === category.trim()
     );
 
     if (categoryIndex === -1) {
       // Category doesn't exist, create new category with this item
       console.log('➕ Creating new category:', category.trim());
-      
+
       restaurant.menu.push({
         category: category.trim(),
         items: [newItem]
       });
-      
+
       categoryIndex = restaurant.menu.length - 1;
       console.log('✅ Added new category at index:', categoryIndex);
     } else {
       // Category exists, add item to it
       console.log('📝 Adding to existing category at index:', categoryIndex);
-      
+
       if (!restaurant.menu[categoryIndex].items) {
         restaurant.menu[categoryIndex].items = [];
       }
-      
+
       restaurant.menu[categoryIndex].items.push(newItem);
       console.log('✅ Item added to category');
     }
@@ -258,7 +261,7 @@ export const createMenuItem = async (req, res) => {
 
     // ✅ CRITICAL: Mark the menu field as modified so Mongoose saves it
     restaurant.markModified('menu');
-    
+
     // Save to database
     const savedRestaurant = await restaurant.save();
     console.log('✅ Restaurant saved to database');
@@ -285,8 +288,8 @@ export const createMenuItem = async (req, res) => {
   } catch (error) {
     console.error('❌ createMenuItem error:', error);
     console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to create menu item',
       error: error.message
     });
@@ -303,9 +306,9 @@ export const updateMenuItem = async (req, res) => {
     const restaurant = await getRestaurant(restaurantOwnerId);
 
     if (!restaurant) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No restaurant found' 
+      return res.status(400).json({
+        success: false,
+        message: 'No restaurant found'
       });
     }
 
@@ -313,9 +316,9 @@ export const updateMenuItem = async (req, res) => {
     const item = restaurant.menu.id(id);
 
     if (!item) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Menu item not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Menu item not found'
       });
     }
 
@@ -340,8 +343,8 @@ export const updateMenuItem = async (req, res) => {
 
   } catch (error) {
     console.error('updateMenuItem error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to update menu item',
       error: error.message
     });
@@ -357,19 +360,19 @@ export const deleteMenuItem = async (req, res) => {
     const restaurant = await getRestaurant(restaurantOwnerId);
 
     if (!restaurant) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No restaurant found' 
+      return res.status(400).json({
+        success: false,
+        message: 'No restaurant found'
       });
     }
 
     // Remove item from embedded array
     const item = restaurant.menu.id(id);
-    
+
     if (!item) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Menu item not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Menu item not found'
       });
     }
 
@@ -378,15 +381,15 @@ export const deleteMenuItem = async (req, res) => {
 
     console.log('✅ Menu item deleted from embedded menu');
 
-    res.json({ 
-      success: true, 
-      message: 'Menu item deleted successfully' 
+    res.json({
+      success: true,
+      message: 'Menu item deleted successfully'
     });
 
   } catch (error) {
     console.error('deleteMenuItem error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to delete menu item',
       error: error.message
     });

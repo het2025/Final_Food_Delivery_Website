@@ -373,6 +373,47 @@ exports.updateOrderStatus = async (req, res) => {
       console.log(`📡 Emitted orderStatusUpdated for order ${id}: ${status}`);
     }
 
+    // If order status is 'Ready', notify delivery-backend to create DeliveryOrder
+    if (status === 'Ready' && oldOrder && oldOrder.status !== 'Ready') {
+      try {
+        const DELIVERY_BACKEND_URL = process.env.DELIVERY_BACKEND_URL || 'http://localhost:5003';
+
+        const deliveryOrderData = {
+          orderId: order._id.toString(),
+          orderNumber: order.orderNumber,
+          restaurant: order.restaurant,
+          restaurantName: order.restaurantName,
+          restaurantLocation: {
+            address: order.restaurantAddress || '',
+            coordinates: []
+          },
+          customer: order.customer,
+          customerName: order.customerName || 'Customer',
+          customerPhone: order.customerPhone || '',
+          deliveryAddress: order.deliveryAddress,
+          orderAmount: order.total,
+          deliveryFee: order.deliveryFee || 0,
+          distance: order.deliveryDistance || 0,
+          estimatedDeliveryTime: order.estimatedDeliveryTime || 30
+        };
+
+        console.log('📦 Notifying delivery-backend about Ready order:', order.orderNumber);
+
+        const deliveryResponse = await axios.post(
+          `${DELIVERY_BACKEND_URL}/api/delivery/orders/create`,
+          deliveryOrderData,
+          { timeout: 5000 }
+        );
+
+        if (deliveryResponse.data.success) {
+          console.log('✅ Delivery order created in delivery-backend');
+        }
+      } catch (deliveryError) {
+        console.error('⚠️ Failed to create delivery order:', deliveryError.message);
+        // Don't fail the status update if delivery notification fails
+      }
+    }
+
     res.json({
       success: true,
       data: order,

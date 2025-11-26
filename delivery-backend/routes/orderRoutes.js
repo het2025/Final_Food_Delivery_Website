@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  createDeliveryOrder,
   getAvailableOrders,
   acceptOrder,
   rejectOrder,
@@ -14,6 +15,10 @@ import { authDelivery } from '../middleware/deliveryAuth.js';
 
 const router = express.Router();
 
+// Internal API - no auth needed (called by customer-backend)
+router.post('/create', createDeliveryOrder);
+
+// Delivery boy routes (require auth)
 router.get('/available', authDelivery, getAvailableOrders);
 router.get('/current', authDelivery, getCurrentOrder);
 router.get('/history', authDelivery, getDeliveryHistory);

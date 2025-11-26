@@ -148,6 +148,39 @@ const RestaurantSchema = new mongoose.Schema({
 
 export const Restaurant = mongoose.model('Restaurant', RestaurantSchema, 'new_registered_restaurants');
 
+// ✅ Legacy Model for older accounts
+const LegacyRestaurant = mongoose.model('LegacyRestaurant', RestaurantSchema, 'restaurants');
+
 export const findRestaurantByOwner = async (ownerId) => {
-  return await Restaurant.findOne({ owner: ownerId });
+  try {
+    console.log('🔍 Looking for restaurant with owner:', ownerId);
+
+    // Ensure ownerId is an ObjectId for consistent querying
+    const ownerObjectId = mongoose.Types.ObjectId.isValid(ownerId)
+      ? new mongoose.Types.ObjectId(ownerId)
+      : ownerId;
+
+    // 1. Try New Collection
+    let restaurant = await Restaurant.findOne({ owner: ownerObjectId });
+
+    if (restaurant) {
+      console.log('✅ Found restaurant in NEW collection:', restaurant._id);
+      return restaurant;
+    }
+
+    // 2. Try Legacy Collection
+    console.log('⚠️ Not found in new collection. Checking legacy collection...');
+    restaurant = await LegacyRestaurant.findOne({ owner: ownerObjectId });
+
+    if (restaurant) {
+      console.log('✅ Found restaurant in LEGACY collection:', restaurant._id);
+      return restaurant;
+    }
+
+    console.log('❌ No restaurant found for owner:', ownerId);
+    return null;
+  } catch (error) {
+    console.error('❌ Error in findRestaurantByOwner:', error);
+    return null;
+  }
 };

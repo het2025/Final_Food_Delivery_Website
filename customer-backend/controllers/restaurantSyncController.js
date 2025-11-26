@@ -28,7 +28,7 @@ const syncRestaurant = async (req, res) => {
     const dataToSync = {
       restaurantId: restaurantData.restaurantId,
       name: restaurantData.name,
-      ownerName: restaurantData.ownerName || '', // ✅ ADDED: Save owner name
+      ownerName: restaurantData.ownerName || '',
       description: restaurantData.description || `Welcome to ${restaurantData.name}!`,
       image: restaurantData.image || '',
       cuisine: Array.isArray(restaurantData.cuisine) && restaurantData.cuisine.length > 0
@@ -59,73 +59,59 @@ const syncRestaurant = async (req, res) => {
 
     console.log('✅ Data validated and defaults applied');
 
-    // Check if restaurant already exists
-    const existing = await Restaurant.findOne({
-      restaurantId: dataToSync.restaurantId
-    });
+    const db = mongoose.connection.db;
+    const restaurantsCollection = db.collection('restaurants');
+    const newRestaurantsCollection = db.collection('new_registered_restaurants');
 
-    if (existing) {
-      console.log('🔄 Restaurant exists, updating...');
+    // 1. Check if it exists in MAIN collection (Approved)
+    const existingMain = await restaurantsCollection.findOne({ restaurantId: dataToSync.restaurantId });
 
-      const updated = await Restaurant.findOneAndUpdate(
+    if (existingMain) {
+      console.log('🔄 Restaurant found in MAIN collection, updating...');
+      await restaurantsCollection.updateOne(
         { restaurantId: dataToSync.restaurantId },
-        { $set: dataToSync },
-        { new: true, runValidators: true }
+        { $set: dataToSync }
       );
-
-      console.log('✅ Restaurant updated:', updated.name);
-
-      return res.json({
-        success: true,
-        data: updated,
-        message: 'Restaurant updated successfully'
-      });
+      console.log('✅ Main restaurant updated');
+      return res.json({ success: true, message: 'Restaurant updated in main collection' });
     }
 
-    // Create new restaurant
-    console.log('✨ Creating new restaurant...');
+    // 2. Check if it exists in PENDING collection (Unapproved)
+    const existingPending = await newRestaurantsCollection.findOne({ restaurantId: dataToSync.restaurantId });
 
-    const newRestaurant = await Restaurant.create(dataToSync);
+    if (existingPending) {
+      console.log('🔄 Restaurant found in PENDING collection, updating...');
+      await newRestaurantsCollection.updateOne(
+        { restaurantId: dataToSync.restaurantId },
+        { $set: dataToSync }
+      );
+      console.log('✅ Pending restaurant updated');
+      return res.json({ success: true, message: 'Restaurant updated in pending collection' });
+    }
+
+    // 3. New Restaurant -> Insert into PENDING collection
+    console.log('✨ Creating new restaurant in PENDING collection...');
+    // Ensure _id is set if provided, or let Mongo generate it?
+    // Mongoose models usually handle _id. Here we use raw driver.
+    // If restaurantData has _id, use it.
+    if (restaurantData._id) {
+      dataToSync._id = new mongoose.Types.ObjectId(restaurantData._id);
+    }
+
+    await newRestaurantsCollection.insertOne(dataToSync);
 
     console.log('✅ ========================================');
-    console.log('✅ NEW RESTAURANT CREATED IN CUSTOMER DB!');
+    console.log('✅ NEW RESTAURANT CREATED IN PENDING DB!');
     console.log('✅ ========================================');
-    console.log('📍 Name:', newRestaurant.name);
-    console.log('📍 ID:', newRestaurant._id);
-    console.log('📍 Restaurant ID:', newRestaurant.restaurantId);
 
     res.status(201).json({
       success: true,
-      data: newRestaurant,
-      message: 'Restaurant synced successfully'
+      data: dataToSync,
+      message: 'Restaurant synced to pending collection'
     });
 
   } catch (error) {
-    console.error('❌ ========================================');
-    console.error('❌ SYNC ERROR');
-    console.error('❌ ========================================');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(e => e.message);
-      console.error('Validation errors:', messages);
-
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed: ' + messages.join(', '),
-        errors: messages
-      });
-    }
-
-    if (error.code === 11000) {
-      console.error('Duplicate key error - restaurant already exists');
-      return res.status(409).json({
-        success: false,
-        message: 'Restaurant with this ID already exists'
-      });
-    }
-
+    console.error('❌ Sync Error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to sync restaurant',
@@ -139,7 +125,8 @@ const getNewlyRegisteredRestaurants = async (req, res) => {
   try {
     console.log('🔍 Fetching newly registered restaurants...');
 
-    // ✅ FIXED: Query ONLY the new_registered_restaurants collection directly
+    // ✅ FIXED: Query 'new_registered_restaurants' collection as requested by user
+    // We will ensure Admin Approval keeps the record here with status='active'
     const db = mongoose.connection.db;
     const newRestaurantsCollection = db.collection('new_registered_restaurants');
 
@@ -147,7 +134,7 @@ const getNewlyRegisteredRestaurants = async (req, res) => {
       status: 'active',
       isActive: true
     })
-      .sort({ createdAt: -1 })
+      .sort({ approvedAt: -1, createdAt: -1 })
       .limit(50)
       .toArray();
 

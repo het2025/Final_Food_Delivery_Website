@@ -1,0 +1,126 @@
+MongoDB Connected: ac-aw7735x-shard-00-01.7k1dq1j.mongodb.net
+
+========== RESTAURANT OWNERS ==========
+Found 4 owners
+ID: 6926b542c04a6a926ae60e57, Name: Test Owner dewyng, Email: testownerdewyng@example.com, RestaurantLink: 6926b542c04a6a926ae60e5a
+ID: 6926b6cfc04a6a926ae60e62, Name: devesh kahar, Email: devesh@gamil.com, RestaurantLink: 6926b6d0911b3c8d51e209f4
+ID: 6926b8143cace238d1c1bd6d, Name: Test Owner pjtk8n, Email: testownerpjtk8n@example.com, RestaurantLink: 6926b8153cace238d1c1bd70
+ID: 6926b8cf6e9b1fe11f8545df, Name: Test Owner xvcngc, Email: testownerxvcngc@example.com, RestaurantLink: 6926b8d06e9b1fe11f8545e2
+
+========== RESTAURANTS (New Collection) ==========
+Found 2 restaurants
+ID: 6926b8153cace238d1c1bd70, Name: Test Restaurant pjtk8n, OwnerID: 6926b8143cace238d1c1bd6d
+ID: 6926b8d06e9b1fe11f8545e2, Name: Test Restaurant xvcngc, OwnerID: 6926b8cf6e9b1fe11f8545df
+
+========== RESTAURANTS (Legacy Collection) ==========
+Found 104 legacy restaurants
+ID: 691d4f4ac342efbb77140985, Name: Kai Asia, OwnerID: undefined
+ID: 691d4f4ac342efbb77140988, Name: Spice Kraft, OwnerID: undefined
+ID: 691d4f4ac342efbb7714098b, Name: Creekyard, OwnerID: undefined
+ID: 691d4f4ac342efbb7714098e, Name: Regenta by Fairlark, OwnerID: undefined
+ID: 691d4f4ac342efbb77140991, Name: Zoi Bistro, OwnerID: undefined
+ID: 691d4f4ac342efbb77140994, Name: Pizzawala's, OwnerID: undefined
+ID: 691d4f4ac342efbb77140997, Name: Italian Affair, OwnerID: undefined
+ID: 691d4f4ac342efbb7714099a, Name: DosBros Fresh Mexican Grill, OwnerID: undefined
+ID: 691d4f4ac342efbb7714099d, Name: Cafe Appetito Sarabhai, OwnerID: undefined
+ID: 691d4f4ac342efbb7714099f, Name: Wok On Fire, OwnerID: undefined
+ID: 691d4f4ac342efbb771409a2, Name: Jassi De Parathe, OwnerID: undefined
+ID: 691d4f4ac342efbb771409a5, Name: Kansaar Gujarati Thali, OwnerID: undefined
+ID: 691d4f4ac342efbb771409a8, Name: Raju Omlet, OwnerID: undefined
+ID: 691d4f4ac342efbb771409aa, Name: Rasthal Gujarati Thali, OwnerID: undefined
+ID: 691d4f4ac342efbb771409ad, Name: Rasa Restaurant, OwnerID: undefined
+ID: 691d4f4ac342efbb771409b0, Name: Old School Eatery, OwnerID: undefined
+ID: 691d4f4ac342efbb771409b2, Name: Teal Restaurant, OwnerID: undefined
+ID: 691d4f4ac342efbb771409b5, Name: Tasty Vadapav, OwnerID: undefined
+ID: 691d4f4bc342efbb771409b7, Name: Pizza On The Rock, OwnerID: undefined
+ID: 691d4f4bc342efbb771409b9, Name: Offside Lounge, OwnerID: undefined
+ID: 691d4f4bc342efbb771409bb, Name: Peshawri ITC WelcomHotel, OwnerID: undefined
+ID: 691d4f4bc342efbb771409bd, Name: San's Sizzlers, OwnerID: undefined
+ID: 691d4f4bc342efbb771409bf, Name: Little Italy, OwnerID: undefined
+ID: 691d4f4bc342efbb771409c1, Name: Saffron Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409c3, Name: WelcomCafe Cambay, OwnerID: undefined
+ID: 691d4f4bc342efbb771409c5, Name: Girnar Kathiyawadi Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409c7, Name: Bombay Sandwich, OwnerID: undefined
+ID: 691d4f4bc342efbb771409c9, Name: Spice Nation, OwnerID: undefined
+ID: 691d4f4bc342efbb771409cb, Name: Mad Over Grills, OwnerID: undefined
+ID: 691d4f4bc342efbb771409cd, Name: Kathiyawadi Village, OwnerID: undefined
+ID: 691d4f4bc342efbb771409cf, Name: Spice Junction, OwnerID: undefined
+ID: 691d4f4bc342efbb771409d1, Name: Pizza Corner Express, OwnerID: undefined
+ID: 691d4f4bc342efbb771409d3, Name: Bombay Street Kitchen, OwnerID: undefined
+ID: 691d4f4bc342efbb771409d5, Name: Dragon Wok Asian Kitchen, OwnerID: undefined
+ID: 691d4f4bc342efbb771409d7, Name: Cafe Mocha Beans, OwnerID: undefined
+ID: 691d4f4bc342efbb771409d9, Name: Kerala Kitchen, OwnerID: undefined
+ID: 691d4f4bc342efbb771409db, Name: Flame Grill House, OwnerID: undefined
+ID: 691d4f4bc342efbb771409dd, Name: Rajasthani Rasoi, OwnerID: undefined
+ID: 691d4f4bc342efbb771409df, Name: Urban Bites Fusion, OwnerID: undefined
+ID: 691d4f4bc342efbb771409e1, Name: Desi Dhaba Express, OwnerID: undefined
+ID: 691d4f4bc342efbb771409e3, Name: Havmor Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409e5, Name: That Place, OwnerID: undefined
+ID: 691d4f4bc342efbb771409e7, Name: White Potato Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409e9, Name: Canara Coffee House, OwnerID: undefined
+ID: 691d4f4bc342efbb771409eb, Name: Cafe Fitoor, OwnerID: undefined
+ID: 691d4f4bc342efbb771409ed, Name: The Glass House - Eastin Residences, OwnerID: undefined
+ID: 691d4f4bc342efbb771409ef, Name: Moshic, OwnerID: undefined
+ID: 691d4f4bc342efbb771409f1, Name: Hariyali Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409f3, Name: Meraki Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409f5, Name: Hotel Gurudev Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409f7, Name: Azure Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409f9, Name: 22nd Parallel, OwnerID: undefined
+ID: 691d4f4bc342efbb771409fb, Name: Mandap Restaurant, OwnerID: undefined
+ID: 691d4f4bc342efbb771409fd, Name: Sasumaa Gujarati Thali, OwnerID: undefined
+ID: 691d4f4bc342efbb771409ff, Name: The Secret Kitchen, OwnerID: undefined
+ID: 691d4f4bc342efbb77140a01, Name: Mandarin Asian Kitchen, OwnerID: undefined
+ID: 691d4f4bc342efbb77140a03, Name: Gazebo Garden Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a05, Name: Mahakali Sev Usal, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a07, Name: Bayleaf Multi Cuisine Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a09, Name: Fiorella Italian Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a0b, Name: Mynt Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a0d, Name: Mirch Masala Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a0f, Name: Zoi Bistro - Nukkad Pe, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a11, Name: Koa Cafe, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a13, Name: American Fresh Mexican Grill, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a15, Name: Morsel Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a17, Name: Nukkad Pe Cafe, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a19, Name: The Brewery - Alembic Colony, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a1b, Name: Artistry Cafe - Sevasi, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a1d, Name: The Barbeque Nation, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a1f, Name: TRU Kitchen, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a21, Name: Big Belly Burger, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a23, Name: Social Affair, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a25, Name: Saleem Javed Rule The Rolls, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a27, Name: La Pino'z Pizza, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a29, Name: Ministry of Eggs, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a2b, Name: Pizza Wala, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a2d, Name: Ratri Bazar, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a2f, Name: Court Lounge, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a31, Name: Hook School Eatery, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a33, Name: Trupti Refreshment, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a35, Name: Cheelizza - India Ka Pizza, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a37, Name: Kalaghoda, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a39, Name: Hot On Fire, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a3b, Name: Fun Over Grills, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a3d, Name: Sugar N Spice, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a3f, Name: Girdhar Kathiyawadi Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a41, Name: Sangam Hotel, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a43, Name: Tapi Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a45, Name: Yummy Vadapav, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a47, Name: Govinda's Gujarati Thali Restaurant, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a49, Name: Jagdish Food Zone, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a4b, Name: Blue Coriander, OwnerID: undefined
+ID: 691d4f4cc342efbb77140a4d, Name: The Grand Thakar, OwnerID: undefined
+ID: 691d4f4dc342efbb77140a4f, Name: Simply South, OwnerID: undefined
+ID: 691d4f4dc342efbb77140a51, Name: New Shalimar Restaurant, OwnerID: undefined
+ID: 691d4f4dc342efbb77140a53, Name: Laxmi Punjabi Restaurant, OwnerID: undefined
+ID: 691d4f4dc342efbb77140a55, Name: Tandoori Flames Restaurant, OwnerID: undefined
+ID: 691d4f4dc342efbb77140a57, Name: Pandeyji Restaurant, OwnerID: undefined
+ID: 691d4f4dc342efbb77140a59, Name: Picaso The Master Chef, OwnerID: undefined
+ID: 6926b542911b3c8d51e209d1, Name: Test Restaurant dewyng, OwnerID: undefined
+ID: 6926b6d0911b3c8d51e209f4, Name: Fish Store, OwnerID: 6926b6cfc04a6a926ae60e62
+ID: 6926b815911b3c8d51e20a57, Name: Test Restaurant pjtk8n, OwnerID: undefined
+ID: 6926b8d0911b3c8d51e20a5a, Name: Test Restaurant xvcngc, OwnerID: undefined
+
+========== DIAGNOSIS ==========
+❌ Owner testownerdewyng@example.com has NO RESTAURANT found!
+✅ Owner devesh@gamil.com linked to LEGACY restaurant Fish Store
+✅ Owner testownerpjtk8n@example.com linked to NEW restaurant Test Restaurant pjtk8n
+✅ Owner testownerxvcngc@example.com linked to NEW restaurant Test Restaurant xvcngc

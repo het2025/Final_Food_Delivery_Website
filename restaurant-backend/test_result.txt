@@ -1,0 +1,136 @@
+🚀 Starting Registration Test...
+Payload: {
+  "name": "Test Owner xvcngc",
+  "email": "testownerxvcngc@example.com",
+  "password": "password123",
+  "phone": "9941728573",
+  "restaurant": {
+    "name": "Test Restaurant xvcngc",
+    "description": "A test restaurant for debugging",
+    "cuisine": [
+      "Italian",
+      "Mexican"
+    ],
+    "location": {
+      "area": "Test Area",
+      "address": "123 Test St",
+      "city": "Vadodara",
+      "state": "Gujarat",
+      "pincode": "390001"
+    },
+    "contact": {
+      "phone": "9966701865",
+      "email": "restaurantxvcngc@example.com"
+    }
+  }
+}
+✅ Registration Successful!
+Response Data: {
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjZiOGNmNmU5YjFmZTExZjg1NDVkZiIsImlhdCI6MTc2NDE0NTM2MCwiZXhwIjoxNzY0NzUwMTYwfQ.p1k770JcIpUoA4dSoh2XJplWo53260XBJC3Xu9-9KEw",
+  "data": {
+    "user": {
+      "id": "6926b8cf6e9b1fe11f8545df",
+      "name": "Test Owner xvcngc",
+      "email": "testownerxvcngc@example.com",
+      "phone": "9941728573"
+    },
+    "restaurant": {
+      "id": "6926b8d06e9b1fe11f8545e2",
+      "name": "Test Restaurant xvcngc",
+      "location": {
+        "area": "Test Area",
+        "address": "123 Test St",
+        "city": "Vadodara",
+        "state": "Gujarat",
+        "pincode": "390001",
+        "coordinates": [
+          0,
+          0
+        ]
+      },
+      "status": "active"
+    }
+  },
+  "message": "Registration successful! Welcome to QuickBite."
+}
+🔑 Token received. Testing Profile Retrieval...
+✅ Profile Retrieval Successful!
+Profile Data: {
+  "success": true,
+  "data": {
+    "location": {
+      "area": "Test Area",
+      "address": "123 Test St",
+      "city": "Vadodara",
+      "state": "Gujarat",
+      "pincode": "390001",
+      "coordinates": [
+        0,
+        0
+      ]
+    },
+    "contact": {
+      "phone": "9966701865",
+      "email": "restaurantxvcngc@example.com"
+    },
+    "_id": "6926b8d06e9b1fe11f8545e2",
+    "owner": "6926b8cf6e9b1fe11f8545df",
+    "name": "Test Restaurant xvcngc",
+    "description": "A test restaurant for debugging",
+    "image": "",
+    "cuisine": [
+      "Italian",
+      "Mexican"
+    ],
+    "gstNumber": "",
+    "deliveryTime": "30",
+    "priceRange": "₹₹",
+    "menu": [],
+    "status": "active",
+    "isActive": true,
+    "rating": 0,
+    "totalReviews": 0,
+    "createdAt": "2025-11-26T08:22:40.005Z",
+    "updatedAt": "2025-11-26T08:22:40.005Z",
+    "__v": 0
+  }
+}
+Testing Menu Categories Retrieval...
+✅ Categories Retrieval Successful!
+Categories Data: {
+  "success": true,
+  "data": [
+    {
+      "_id": "cat_0",
+      "name": "Starters",
+      "isActive": true
+    },
+    {
+      "_id": "cat_1",
+      "name": "Main Course",
+      "isActive": true
+    },
+    {
+      "_id": "cat_2",
+      "name": "Desserts",
+      "isActive": true
+    },
+    {
+      "_id": "cat_3",
+      "name": "Beverages",
+      "isActive": true
+    },
+    {
+      "_id": "cat_4",
+      "name": "Breads",
+      "isActive": true
+    },
+    {
+      "_id": "cat_5",
+      "name": "Rice & Biryani",
+      "isActive": true
+    }
+  ],
+  "message": "Categories loaded successfully"
+}

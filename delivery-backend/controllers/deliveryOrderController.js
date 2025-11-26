@@ -1,6 +1,105 @@
 import { DeliveryOrder } from '../models/DeliveryOrder.js';
 import { DeliveryBoy } from '../models/DeliveryBoy.js';
 import mongoose from 'mongoose';
+import axios from 'axios';
+
+// @desc    Create delivery order (called by customer-backend when order is Ready)
+// @route   POST /api/delivery/orders/create
+// @access  Internal (from other backends)
+export const createDeliveryOrder = async (req, res) => {
+  try {
+    const {
+      orderId,
+      orderNumber,
+      restaurant,
+      restaurantName,
+      restaurantLocation,
+      customer,
+      customerName,
+      customerPhone,
+      deliveryAddress,
+      orderAmount,
+      deliveryFee,
+      distance,
+      estimatedDeliveryTime
+    } = req.body;
+
+    console.log('🔔 Creating delivery order:', orderNumber);
+
+    // Validation
+    if (!orderId || !restaurant || !customer) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required order data'
+      });
+    }
+
+    // Check if delivery order already exists for this order
+    const existingOrder = await DeliveryOrder.findOne({ orderId });
+    if (existingOrder) {
+      console.log('⚠️ Delivery order already exists for orderId:', orderId);
+      return res.status(200).json({
+        success: true,
+        message: 'Delivery order already exists',
+        data: existingOrder
+      });
+    }
+
+    // Create new delivery order
+    const deliveryOrder = new DeliveryOrder({
+      orderId,
+      orderNumber,
+      restaurant,
+      restaurantName,
+      restaurantLocation,
+      customer,
+      customerName,
+      customerPhone,
+      deliveryAddress,
+      orderAmount,
+      deliveryFee,
+      distance,
+      estimatedDeliveryTime,
+      status: 'ready_for_pickup',
+      deliveryBoy: null
+    });
+
+    await deliveryOrder.save();
+    console.log('✅ Delivery order created:', deliveryOrder._id);
+
+    // Get Socket.IO instance and emit to all delivery boys
+    const io = req.app.get('io');
+    if (io) {
+      const notificationData = {
+        orderId: deliveryOrder._id,
+        orderNumber: deliveryOrder.orderNumber,
+        restaurantName: deliveryOrder.restaurantName,
+        deliveryAddress: deliveryOrder.deliveryAddress,
+        orderAmount: deliveryOrder.orderAmount,
+        deliveryFee: deliveryOrder.deliveryFee,
+        distance: deliveryOrder.distance
+      };
+
+      io.emit('new:order', notificationData);
+      console.log('📡 Emitted new:order event to all delivery boys:', notificationData);
+    } else {
+      console.warn('⚠️ Socket.IO instance not available');
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Delivery order created and notification sent',
+      data: deliveryOrder
+    });
+  } catch (error) {
+    console.error('❌ Create delivery order error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating delivery order',
+      error: error.message
+    });
+  }
+};
 
 // @desc    Get available orders (ready for pickup)
 // @route   GET /api/delivery/orders/available
@@ -8,7 +107,7 @@ import mongoose from 'mongoose';
 export const getAvailableOrders = async (req, res) => {
   try {
     const deliveryBoy = await DeliveryBoy.findById(req.deliveryBoy._id);
-    
+
     if (!deliveryBoy.isAvailable) {
       return res.status(400).json({
         success: false,
@@ -21,8 +120,8 @@ export const getAvailableOrders = async (req, res) => {
       status: 'ready_for_pickup',
       deliveryBoy: null
     })
-    .sort({ createdAt: -1 })
-    .limit(20);
+      .sort({ createdAt: -1 })
+      .limit(20);
 
     res.status(200).json({
       success: true,
@@ -176,6 +275,20 @@ export const pickupOrder = async (req, res) => {
     order.pickedUpAt = new Date();
     await order.save();
 
+    // ✅ NEW: Sync to customer-backend - update status to 'OutForDelivery'
+    try {
+      const CUSTOMER_BACKEND_URL = process.env.CUSTOMER_BACKEND_URL || 'http://localhost:5000';
+      await axios.put(
+        `${CUSTOMER_BACKEND_URL}/api/orders/${order.orderId}/update-status`,
+        { status: 'OutForDelivery' },
+        { timeout: 5000 }
+      );
+      console.log(`✅ Synced 'OutForDelivery' status to customer-backend for order ${order.orderNumber}`);
+    } catch (syncError) {
+      console.error('⚠️ Failed to sync pickup status to customer-backend:', syncError.message);
+      // Don't fail the request if sync fails
+    }
+
     res.status(200).json({
       success: true,
       message: 'Order picked up successfully',
@@ -272,6 +385,20 @@ export const completeDelivery = async (req, res) => {
     order.actualDeliveryTime = deliveryTime;
     await order.save();
 
+    // ✅ NEW: Sync to customer-backend - update status to 'Delivered'
+    try {
+      const CUSTOMER_BACKEND_URL = process.env.CUSTOMER_BACKEND_URL || 'http://localhost:5000';
+      await axios.put(
+        `${CUSTOMER_BACKEND_URL}/api/orders/${order.orderId}/update-status`,
+        { status: 'Delivered' },
+        { timeout: 5000 }
+      );
+      console.log(`✅ Synced 'Delivered' status to customer-backend for order ${order.orderNumber}`);
+    } catch (syncError) {
+      console.error('⚠️ Failed to sync delivered status to customer-backend:', syncError.message);
+      // Don't fail the request if sync fails
+    }
+
     // Update delivery boy stats
     const deliveryBoy = await DeliveryBoy.findById(deliveryBoyId);
     deliveryBoy.completedOrders += 1;
@@ -342,9 +469,9 @@ export const getDeliveryHistory = async (req, res) => {
         deliveryBoy: deliveryBoyId,
         status: 'delivered'
       })
-      .sort({ deliveredAt: -1 })
-      .skip(skip)
-      .limit(limit),
+        .sort({ deliveredAt: -1 })
+        .skip(skip)
+        .limit(limit),
       DeliveryOrder.countDocuments({
         deliveryBoy: deliveryBoyId,
         status: 'delivered'

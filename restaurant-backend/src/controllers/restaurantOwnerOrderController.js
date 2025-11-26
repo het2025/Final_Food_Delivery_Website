@@ -1,6 +1,7 @@
 import { Order } from '../models/Order.js';
 import { findRestaurantByOwner, Restaurant } from '../models/Restaurant.js';
 import mongoose from 'mongoose';
+import axios from 'axios';
 
 const ALLOWED_STATUSES = [
   'Pending', 'Accepted', 'Preparing', 'Ready', 'OutForDelivery', 'Cancelled'
@@ -172,6 +173,29 @@ export const updateRestaurantOwnerOrderStatus = async (req, res) => {
 
     console.log('✅ Order status updated successfully to:', status);
 
+    // ✅ Sync status update to customer-backend
+    // This is crucial for 'Ready' status to trigger delivery notification!
+    try {
+      const CUSTOMER_BACKEND_URL = process.env.CUSTOMER_BACKEND_URL || 'http://localhost:5000';
+
+      console.log(`📡 Syncing status '${status}' to customer-backend for order ${id}...`);
+
+      const syncResponse = await axios.put(
+        `${CUSTOMER_BACKEND_URL}/api/orders/${id}/update-status`,
+        { status: status },
+        { timeout: 5000 }
+      );
+
+      if (syncResponse.data.success) {
+        console.log('✅ Status synced to customer-backend - delivery notification should be triggered!');
+      } else {
+        console.warn('⚠️ Customer-backend sync returned success: false');
+      }
+    } catch (syncError) {
+      console.error('⚠️ Failed to sync status to customer-backend:', syncError.message);
+      // Don't fail the request if sync fails - the local update succeeded
+    }
+
     return res.json({
       success: true,
       data: updateResult.value,
@@ -314,7 +338,6 @@ export const acceptOrder = async (req, res) => {
     console.log('✅ Restaurant accepting order:', id);
 
     // Update order status in customer backend
-    const axios = require('axios');
     const updateResponse = await axios.put(
       `http://localhost:5000/api/orders/${id}/update-status`,
       {
@@ -354,7 +377,6 @@ export const rejectOrder = async (req, res) => {
 
     console.log('❌ Restaurant rejecting order:', id);
 
-    const axios = require('axios');
     const updateResponse = await axios.put(
       `http://localhost:5000/api/orders/${id}/update-status`,
       {

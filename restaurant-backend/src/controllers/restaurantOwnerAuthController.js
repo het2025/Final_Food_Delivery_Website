@@ -127,6 +127,46 @@ export const registerRestaurantOwner = async (req, res) => {
 
     console.log('✅ Restaurant linked to owner');
 
+    // ✅✅ CRITICAL: VERIFY the linkage was saved correctly
+    console.log('🔍 Verifying restaurant-owner linkage...');
+    const verifyOwner = await RestaurantOwner.findById(restaurantOwner._id);
+    if (!verifyOwner) {
+      console.error('❌ CRITICAL: Cannot find owner after creation!');
+      throw new Error('Owner verification failed');
+    }
+
+    if (!verifyOwner.restaurant || verifyOwner.restaurant.toString() !== newRestaurant._id.toString()) {
+      console.error('❌ CRITICAL: Restaurant linkage verification failed!');
+      console.error('Owner restaurant field:', verifyOwner.restaurant);
+      console.error('Expected restaurant ID:', newRestaurant._id);
+      throw new Error('Failed to link restaurant to owner');
+    }
+    console.log('✅ Owner linkage verified');
+
+    // ✅✅ CRITICAL: VERIFY we can find the restaurant by owner ID
+    console.log('🔍 Verifying restaurant can be found by owner ID...');
+    console.log('Searching for owner:', restaurantOwner._id);
+    const verifyRestaurant = await Restaurant.findOne({ owner: restaurantOwner._id });
+    if (!verifyRestaurant) {
+      console.error('❌ CRITICAL: Cannot find restaurant by owner ID immediately after creation!');
+      console.error('Owner ID:', restaurantOwner._id);
+      console.error('Restaurant ID:', newRestaurant._id);
+      console.error('Restaurant owner field:', newRestaurant.owner);
+      console.error('Owner ID type:', typeof restaurantOwner._id);
+      console.error('Restaurant owner field type:', typeof newRestaurant.owner);
+
+      // Try to find ALL restaurants to debug
+      const allRestaurants = await Restaurant.find({});
+      console.error('Total restaurants in database:', allRestaurants.length);
+      if (allRestaurants.length > 0) {
+        console.error('Sample restaurant owners:', allRestaurants.slice(0, 3).map(r => ({ id: r._id, owner: r.owner })));
+      }
+
+      throw new Error('Restaurant verification failed - cannot find by owner');
+    }
+    console.log('✅✅ Verification PASSED - Restaurant can be found by owner ID');
+    console.log('Verified restaurant ID:', verifyRestaurant._id);
+
     // ✅ ✅ ✅ PERMANENT AUTO-SYNC TO CUSTOMER DATABASE ✅ ✅ ✅
     console.log('🔄 ========================================');
     console.log('🔄 STARTING AUTO-SYNC TO CUSTOMER DATABASE');

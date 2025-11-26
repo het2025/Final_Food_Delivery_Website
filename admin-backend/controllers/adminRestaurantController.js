@@ -93,9 +93,15 @@ export const getPendingRestaurants = async (req, res) => {
     const customerConn = await getCustomerDB();
     const newRestaurantsCollection = customerConn.collection('new_registered_restaurants');
 
-    // Fetch only from new_registered_restaurants collection
+    // ✅ FIXED: Fetch only UNAPPROVED restaurants (exclude rejected AND approved)
     const pendingRestaurants = await newRestaurantsCollection
-      .find({ status: { $ne: 'rejected' } })
+      .find({
+        status: { $ne: 'rejected' },
+        $or: [
+          { isApproved: { $exists: false } },
+          { isApproved: false }
+        ]
+      })
       .sort({ registeredAt: -1, createdAt: -1 })
       .toArray();
 
@@ -187,8 +193,21 @@ export const approveRestaurant = async (req, res) => {
         });
       }
 
-      // Delete from new_registered_restaurants collection
-      await newRestaurantsCollection.deleteOne({ _id: restaurantId });
+      // ✅ FIXED: Update new_registered_restaurants instead of deleting
+      // This ensures it remains visible on the "Newly Registered" page for customers
+      await newRestaurantsCollection.updateOne(
+        { _id: restaurantId },
+        {
+          $set: {
+            status: 'active',
+            isActive: true,
+            isApproved: true,
+            approvedAt: new Date(),
+            approvedBy: req.admin._id
+          }
+        }
+      );
+      console.log(`✅ Restaurant updated in new_registered_restaurants (kept for visibility)`);
     }
 
     // ✅ UPDATE RestaurantOwner in restaurant database

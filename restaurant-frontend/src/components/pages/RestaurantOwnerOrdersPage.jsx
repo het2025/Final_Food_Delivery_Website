@@ -19,16 +19,17 @@ function RestaurantOwnerOrdersPage() {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [newOrderNotification, setNewOrderNotification] = useState(false);
 
+  // ✅ FIXED: Removed 'OutForDelivery' - 'Ready' is now the final status for restaurants
   const allowedStatuses = [
-    'Pending', 'Accepted', 'Preparing', 'Ready', 'OutForDelivery', 'Cancelled'
+    'Pending', 'Accepted', 'Preparing', 'Ready', 'Cancelled'
   ];
 
+  // ✅ FIXED: Removed 'OutForDelivery' from timeline
   const statusTimeline = [
     { key: 'Pending', label: 'Order Placed', icon: ClipboardList },
     { key: 'Accepted', label: 'Accepted', icon: CheckCircle },
     { key: 'Preparing', label: 'Preparing', icon: Clock },
-    { key: 'Ready', label: 'Ready', icon: Package },
-    { key: 'OutForDelivery', label: 'Out for Delivery', icon: MapPin }
+    { key: 'Ready', label: 'Ready (Final)', icon: Package }
   ];
 
   // UPDATED: always subtract ₹30 from all total calculations
@@ -234,21 +235,19 @@ function RestaurantOwnerOrdersPage() {
                       }
                       disabled={
                         updatingOrderId === order.backendId ||
-                        order.status === 'OutForDelivery' ||
+                        order.status === 'Ready' ||
                         order.status === 'Cancelled'
                       }
-                      className={`text-xs md:text-sm font-semibold border rounded-lg px-2 py-1 ${
-                        order.status === 'OutForDelivery' ||
-                        order.status === 'Delivered'
+                      className={`text-xs md:text-sm font-semibold border rounded-lg px-2 py-1 ${order.status === 'Ready'
                           ? 'text-green-600 border-green-300 bg-green-50 cursor-not-allowed'
                           : order.status === 'Cancelled'
-                          ? 'text-red-500 border-red-300 bg-red-50 cursor-not-allowed'
-                          : 'text-yellow-600 border-yellow-300 bg-yellow-50'
-                      }`}
+                            ? 'text-red-500 border-red-300 bg-red-50 cursor-not-allowed'
+                            : 'text-yellow-600 border-yellow-300 bg-yellow-50'
+                        }`}
                     >
                       {allowedStatuses.map((status) => (
                         <option key={status} value={status}>
-                          {status === 'OutForDelivery' ? 'Out for Delivery (Final)' : status}
+                          {status === 'Ready' ? 'Ready (Final)' : status}
                         </option>
                       ))}
                     </select>
