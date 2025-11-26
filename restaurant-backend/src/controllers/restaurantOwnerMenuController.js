@@ -1,9 +1,9 @@
-import { Restaurant } from '../models/Restaurant.js';
+import { findRestaurantByOwner } from '../models/Restaurant.js';
 import mongoose from 'mongoose';
 
 // Helper: Get restaurant for owner
 const getRestaurant = async (restaurantOwnerId) => {
-  const restaurant = await Restaurant.findOne({ owner: restaurantOwnerId });
+  const restaurant = await findRestaurantByOwner(restaurantOwnerId);
   return restaurant;
 };
 

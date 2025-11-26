@@ -1,10 +1,10 @@
-// import { Order } from '../models/Order.js';
-import { Restaurant } from '../models/Restaurant.js';
+import { Order } from '../models/Order.js';
+import { findRestaurantByOwner, Restaurant } from '../models/Restaurant.js';
 import mongoose from 'mongoose';
 
 const ALLOWED_STATUSES = [
   'Pending', 'Accepted', 'Preparing', 'Ready', 'OutForDelivery', 'Cancelled'
-];  
+];
 
 const STATUS_TRANSITIONS = {  // Updated for lowercase
   pending: ['accepted', 'cancelled'],
@@ -19,30 +19,14 @@ const STATUS_TRANSITIONS = {  // Updated for lowercase
 // Helper - Look in BOTH collections
 const getRestaurantId = async (restaurantOwnerId) => {
   console.log('🔍 Looking for restaurant with owner:', restaurantOwnerId);
-  
-  // Try new_registered_restaurants collection first
-  let restaurant = await Restaurant.findOne({ owner: restaurantOwnerId }).select('_id');
-  
+
+  const restaurant = await findRestaurantByOwner(restaurantOwnerId);
+
   if (restaurant) {
-    console.log('✅ Found in new_registered_restaurants:', restaurant._id);
+    console.log('✅ Found restaurant:', restaurant._id);
     return restaurant._id;
   }
-  
-  // If not found, try accessing the collection directly
-  const mongoose = await import('mongoose');
-  const db = mongoose.default.connection.db;
-  const newRestaurantsCollection = db.collection('new_registered_restaurants');
-  
-  const directResult = await newRestaurantsCollection.findOne(
-    { owner: new mongoose.default.Types.ObjectId(restaurantOwnerId) },
-    { projection: { _id: 1 } }
-  );
-  
-  if (directResult) {
-    console.log('✅ Found via direct collection access:', directResult._id);
-    return directResult._id;
-  }
-  
+
   console.log('❌ Restaurant not found for owner:', restaurantOwnerId);
   return null;
 };
@@ -51,11 +35,11 @@ const getRestaurantId = async (restaurantOwnerId) => {
 export const getRestaurantOwnerOrders = async (req, res) => {
   try {
     const restaurantOwnerId = req.restaurantOwner.id;
-    
+
     console.log('🔍 Fetching orders for restaurant owner:', restaurantOwnerId);
-    
+
     const restaurantId = await getRestaurantId(restaurantOwnerId);
-    
+
     if (!restaurantId) {
       console.log('❌ No restaurant found for owner');
       return res.json({
@@ -78,10 +62,10 @@ export const getRestaurantOwnerOrders = async (req, res) => {
     // Convert restaurantId to ObjectId for query
     const restaurantObjectId = new mongoose.Types.ObjectId(restaurantId);
 
-    const totalOrders = await ordersCollection.countDocuments({ 
-      restaurant: restaurantObjectId 
+    const totalOrders = await ordersCollection.countDocuments({
+      restaurant: restaurantObjectId
     });
-    
+
     console.log('📊 Total orders found:', totalOrders);
 
     const orders = await ordersCollection
@@ -99,21 +83,21 @@ export const getRestaurantOwnerOrders = async (req, res) => {
       success: true,
       data: {
         orders,
-        pagination: { 
-          currentPage: page, 
-          totalPages, 
-          totalOrders, 
-          hasNext: page < totalPages, 
-          hasPrev: page > 1 
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalOrders,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
         }
       }
     });
   } catch (error) {
     console.error('❌ getRestaurantOwnerOrders error:', error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: 'Failed to fetch orders',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -147,17 +131,17 @@ export const updateRestaurantOwnerOrderStatus = async (req, res) => {
     if (!status || !ALLOWED_STATUSES.includes(status)) {
       console.log('❌ Invalid status:', status);
       console.log('   Allowed:', ALLOWED_STATUSES);
-      return res.status(400).json({ 
-        success: false, 
-        message: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(', ')}` 
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(', ')}`
       });
     }
 
     const restaurantId = await getRestaurantId(restaurantOwnerId);
     if (!restaurantId) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'No restaurant found for this owner' 
+      return res.status(403).json({
+        success: false,
+        message: 'No restaurant found for this owner'
       });
     }
 
@@ -166,39 +150,39 @@ export const updateRestaurantOwnerOrderStatus = async (req, res) => {
     const ordersCollection = db.collection('orders');
 
     const updateResult = await ordersCollection.findOneAndUpdate(
-      { 
+      {
         _id: new mongoose.Types.ObjectId(id),
         restaurant: new mongoose.Types.ObjectId(restaurantId)
       },
-      { 
-        $set: { 
+      {
+        $set: {
           status: status,
           updatedAt: new Date()
-        } 
+        }
       },
       { returnDocument: 'after' }
     );
 
     if (!updateResult.value) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Order not found for this restaurant' 
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found for this restaurant'
       });
     }
 
     console.log('✅ Order status updated successfully to:', status);
 
-    return res.json({ 
-      success: true, 
-      data: updateResult.value, 
-      message: 'Order status updated' 
+    return res.json({
+      success: true,
+      data: updateResult.value,
+      message: 'Order status updated'
     });
   } catch (error) {
     console.error('❌ updateRestaurantOwnerOrderStatus error:', error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: 'Failed to update status',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -221,8 +205,8 @@ export const getRestaurantOwnerOrderById = async (req, res) => {
     // ✅ FIXED: Access orders collection directly
     const db = mongoose.connection.db;
     const ordersCollection = db.collection('orders');
-    
-    const order = await ordersCollection.findOne({ 
+
+    const order = await ordersCollection.findOne({
       _id: new mongoose.Types.ObjectId(id),
       restaurant: new mongoose.Types.ObjectId(restaurantId)
     });

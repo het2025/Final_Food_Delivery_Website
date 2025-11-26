@@ -1,8 +1,8 @@
 import { Extra } from '../models/Extra.js'
-import { Restaurant } from '../models/Restaurant.js'
+import { findRestaurantByOwner } from '../models/Restaurant.js'
 
 const getRestaurantOwnerRestaurantId = async (restaurantOwnerId) => {
-  const restaurant = await Restaurant.findOne({ owner: restaurantOwnerId }).select('_id')  // ✅ FIXED
+  const restaurant = await findRestaurantByOwner(restaurantOwnerId)
   return restaurant ? restaurant._id : null
 }
 

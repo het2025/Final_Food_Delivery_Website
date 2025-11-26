@@ -121,10 +121,10 @@ const RestaurantSchema = new mongoose.Schema({
       default: ''
     }
   },
-  
+
   // ✅ Menu items stored here
   menu: [MenuCategorySchema],
-  
+
   status: {
     type: String,
     enum: ['active', 'inactive', 'closed'],
@@ -147,3 +147,7 @@ const RestaurantSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 export const Restaurant = mongoose.model('Restaurant', RestaurantSchema, 'new_registered_restaurants');
+
+export const findRestaurantByOwner = async (ownerId) => {
+  return await Restaurant.findOne({ owner: ownerId });
+};

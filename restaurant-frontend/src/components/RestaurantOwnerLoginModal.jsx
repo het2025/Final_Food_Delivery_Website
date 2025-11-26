@@ -73,7 +73,12 @@ function RestaurantOwnerLoginModal({
       onClose();
       navigate('/dashboard');
     } catch (err) {
-      setError("Invalid login credentials."); // never reveal email existence/reason
+      // Check for specific approval/deactivation messages
+      if (err.message && (err.message.includes('approval') || err.message.includes('deactivated'))) {
+        setError(err.message);
+      } else {
+        setError("Invalid login credentials.");
+      }
     } finally {
       setLoading(false);
     }

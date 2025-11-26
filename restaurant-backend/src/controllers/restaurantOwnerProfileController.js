@@ -1,4 +1,4 @@
-import { Restaurant } from '../models/Restaurant.js';
+import { findRestaurantByOwner } from '../models/Restaurant.js';
 import { RestaurantOwner } from '../models/RestaurantOwner.js';
 
 // ✅ GET PROFILE: Restaurant details for Profile Settings page
@@ -6,7 +6,7 @@ export const getRestaurantProfile = async (req, res) => {
   try {
     const restaurantOwnerId = req.restaurantOwner.id;
     
-    const restaurant = await Restaurant.findOne({ owner: restaurantOwnerId });
+    const restaurant = await findRestaurantByOwner(restaurantOwnerId);
     
     if (!restaurant) {
       return res.status(404).json({
@@ -73,11 +73,8 @@ export const updateRestaurantProfile = async (req, res) => {
       }
     };
 
-    const restaurant = await Restaurant.findOneAndUpdate(
-      { owner: restaurantOwnerId },
-      { $set: updatedData },
-      { new: true, runValidators: true }
-    );
+    // Find restaurant to determine which collection to update
+    const restaurant = await findRestaurantByOwner(restaurantOwnerId);
 
     if (!restaurant) {
       return res.status(404).json({ 
@@ -85,6 +82,10 @@ export const updateRestaurantProfile = async (req, res) => {
         message: 'Restaurant not found' 
       });
     }
+
+    // Update the found document
+    Object.assign(restaurant, updatedData);
+    await restaurant.save();
 
     res.json({ 
       success: true, 

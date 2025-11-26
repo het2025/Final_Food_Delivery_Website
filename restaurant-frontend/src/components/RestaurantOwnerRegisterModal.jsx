@@ -116,14 +116,21 @@ function RestaurantOwnerRegisterModal({ isOpen, onClose }) {
         }
       });
 
-      if (response.success && response.token) {
-        localStorage.setItem('restaurantOwnerToken', response.token);
+      if (response.success) {
         setSuccess(true);
 
-        setTimeout(() => {
-          onClose();
-          navigate('/dashboard', { replace: true });
-        }, 2000);
+        if (response.token) {
+          localStorage.setItem('restaurantOwnerToken', response.token);
+          setTimeout(() => {
+            onClose();
+            navigate('/dashboard', { replace: true });
+          }, 2000);
+        } else {
+          // Approval needed case - keep modal open to show message
+          setTimeout(() => {
+            onClose();
+          }, 5000);
+        }
       } else {
         setError(response.message || 'Registration failed. Please try again.');
       }
@@ -160,7 +167,7 @@ function RestaurantOwnerRegisterModal({ isOpen, onClose }) {
         {success && (
           <div className="flex gap-2 items-center p-4 mb-4 text-green-700 bg-green-50 rounded-lg border border-green-200">
             <CheckCircle size={20} />
-            <span>Registration successful! Redirecting to dashboard...</span>
+            <span>Registration submitted successfully! Please wait for a few days for approval.</span>
           </div>
         )}
 

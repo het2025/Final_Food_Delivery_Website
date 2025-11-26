@@ -3,11 +3,11 @@ import { MenuItem } from '../models/MenuItem.js';
 import { MenuCategory } from '../models/MenuCategory.js';
 import { Additive } from '../models/Additive.js';  // Stub provided below
 import { Extra } from '../models/Extra.js';  // Stub provided below
-import { Restaurant } from '../models/Restaurant.js';
+import { findRestaurantByOwner } from '../models/Restaurant.js';
 
 // Helper: Get restaurant ID for current restaurant owner (fixed field)
 const getRestaurantId = async (restaurantOwnerId) => {
-  const restaurant = await Restaurant.findOne({ owner: restaurantOwnerId }).select('_id');  // Fixed: { owner }
+  const restaurant = await findRestaurantByOwner(restaurantOwnerId);  // Fixed: { owner }
   return restaurant ? restaurant._id : null;
 };
 
