@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const AddressSchema = new mongoose.Schema({
   type: {
@@ -120,4 +120,5 @@ UserSchema.pre('save', function (next) {
   next();
 });
 
-module.exports = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
+export default User;

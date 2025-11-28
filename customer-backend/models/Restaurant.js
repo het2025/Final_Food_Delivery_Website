@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Menu Item Schema
 const MenuItemSchema = new mongoose.Schema({
@@ -447,4 +447,4 @@ RestaurantSchema.methods.getDishesByCategory = function (categoryName) {
   );
 };
 
-module.exports = mongoose.model('Restaurant', RestaurantSchema);
+export default mongoose.model('Restaurant', RestaurantSchema);

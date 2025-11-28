@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import { protect } from '../middleware/auth.js';
+
 const router = express.Router();
-const { protect } = require('../middleware/auth');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -34,4 +35,4 @@ router.get('/:id', protect, (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

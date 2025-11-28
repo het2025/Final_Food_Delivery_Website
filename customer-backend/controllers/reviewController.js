@@ -1,11 +1,11 @@
-const Review = require('../models/Review');
-const Restaurant = require('../models/Restaurant');
-const Order = require('../models/Order');
+import Review from '../models/Review.js';
+import Restaurant from '../models/Restaurant.js';
+import Order from '../models/Order.js';
 
 // @desc    Add a review
 // @route   POST /api/reviews
 // @access  Private
-exports.addReview = async (req, res) => {
+export const addReview = async (req, res) => {
     try {
         const { restaurantId, orderId, rating, comment, photos } = req.body;
 
@@ -63,7 +63,7 @@ exports.addReview = async (req, res) => {
 // @desc    Get reviews for a restaurant
 // @route   GET /api/reviews/restaurant/:restaurantId
 // @access  Public
-exports.getRestaurantReviews = async (req, res) => {
+export const getRestaurantReviews = async (req, res) => {
     try {
         const pageSize = 10;
         const page = Number(req.query.pageNumber) || 1;
@@ -99,7 +99,7 @@ exports.getRestaurantReviews = async (req, res) => {
 // @desc    Get user's reviews
 // @route   GET /api/reviews/myreviews
 // @access  Private
-exports.getUserReviews = async (req, res) => {
+export const getUserReviews = async (req, res) => {
     try {
         const reviews = await Review.find({ user: req.user._id })
             .populate('restaurant', 'name image')
@@ -115,7 +115,7 @@ exports.getUserReviews = async (req, res) => {
 // @desc    Delete a review
 // @route   DELETE /api/reviews/:id
 // @access  Private
-exports.deleteReview = async (req, res) => {
+export const deleteReview = async (req, res) => {
     try {
         const review = await Review.findById(req.params.id);
 

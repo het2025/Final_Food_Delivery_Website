@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const reviewSchema = new mongoose.Schema({
     user: {
@@ -98,4 +98,4 @@ reviewSchema.post(/^findOneAnd/, async function (doc) {
     }
 });
 
-module.exports = mongoose.model('Review', reviewSchema);
+export default mongoose.model('Review', reviewSchema);

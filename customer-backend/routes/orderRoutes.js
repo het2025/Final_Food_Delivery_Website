@@ -1,18 +1,17 @@
-const express = require('express');
-const router = express.Router();
-
-const { 
-  createOrder, 
-  getMyOrders, 
-  getOrderById, 
-  cancelOrder, 
+import express from 'express';
+import {
+  createOrder,
+  getMyOrders,
+  getOrderById,
+  cancelOrder,
   rateOrder,
   updateOrderStatus,
   validateCoupon,
   getReadyOrders
-} = require('../controllers/orderController');
+} from '../controllers/orderController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
-const { protect } = require('../middleware/authMiddleware');
+const router = express.Router();
 
 // Internal route to get ready orders (for delivery polling)
 router.get('/internal/ready', getReadyOrders);
@@ -38,4 +37,4 @@ router.post('/:orderId/rate', rateOrder);
 // Validate a coupon code
 router.post('/validate-coupon', validateCoupon);
 
-module.exports = router;
+export default router;

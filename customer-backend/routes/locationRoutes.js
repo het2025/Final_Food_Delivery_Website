@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import * as locationController from '../controllers/locationController.js';
+
 const router = express.Router();
-const locationController = require('../controllers/locationController');
 
 // Search address
 router.get('/search', locationController.searchAddress);
@@ -14,4 +15,4 @@ router.get('/reverse-geocode', locationController.reverseGeocode);
 // Calculate distance
 router.get('/distance', locationController.calculateDistance);
 
-module.exports = router;
+export default router;

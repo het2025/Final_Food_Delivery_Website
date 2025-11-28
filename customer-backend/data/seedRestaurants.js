@@ -1,15 +1,19 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const Restaurant = require('../models/Restaurant');
-const connectDB = require('../config/database');
+import dotenv from 'dotenv';
+dotenv.config();
+import mongoose from 'mongoose';
+import Restaurant from '../models/Restaurant.js';
+import connectDB from '../config/database.js';
+import { readFile } from 'fs/promises';
 
 // Your restaurants data
-const restaurantsData = require('./restaurants.json');
+const restaurantsData = JSON.parse(
+  await readFile(new URL('./restaurants.json', import.meta.url))
+);
 
 const importData = async () => {
   try {
     await connectDB();
-    
+
     console.log('🗑️  Clearing existing restaurants...');
     await Restaurant.deleteMany({});
     console.log('✅ Existing restaurants cleared');
@@ -25,7 +29,7 @@ const importData = async () => {
     for (let i = 0; i < restaurantsData.length; i++) {
       try {
         const restaurant = restaurantsData[i];
-        
+
         // Transform and validate data
         const transformedData = {
           restaurantId: restaurant.id,
@@ -70,7 +74,7 @@ const importData = async () => {
         // Create restaurant
         await Restaurant.create(transformedData);
         successCount++;
-        
+
         if (successCount % 10 === 0) {
           console.log(`✅ Processed ${successCount}/${restaurantsData.length} restaurants`);
         }
@@ -84,19 +88,19 @@ const importData = async () => {
           name: restaurant.name,
           error: error.message
         });
-        
+
         console.log(`❌ Failed to import restaurant #${i + 1} (ID: ${restaurant.id}): ${error.message}`);
       }
     }
 
     const totalRestaurants = await Restaurant.countDocuments();
-    
+
     console.log('\n🎉 Import Summary:');
     console.log(`   📊 Total in JSON file: ${restaurantsData.length}`);
     console.log(`   ✅ Successfully imported: ${successCount}`);
     console.log(`   ❌ Failed to import: ${failedCount}`);
     console.log(`   📈 Total in database: ${totalRestaurants}`);
-    
+
     if (failedRestaurants.length > 0) {
       console.log('\n❌ Failed Restaurants Details:');
       failedRestaurants.forEach(failed => {
@@ -139,13 +143,13 @@ const importData = async () => {
 const validateData = async () => {
   try {
     console.log(`🔍 Validating ${restaurantsData.length} restaurants...`);
-    
+
     const errors = [];
-    
+
     for (let i = 0; i < restaurantsData.length; i++) {
       const restaurant = restaurantsData[i];
       const issues = [];
-      
+
       // Check required fields
       if (!restaurant.name) issues.push('Missing name');
       if (!restaurant.id) issues.push('Missing id');
@@ -153,22 +157,22 @@ const validateData = async () => {
       if (!restaurant.location?.address) issues.push('Missing location.address');
       if (!restaurant.cuisine || restaurant.cuisine.length === 0) issues.push('Missing cuisine');
       if (!restaurant.deliveryTime) issues.push('Missing deliveryTime');
-      
+
       // Check data types
       if (restaurant.rating && (typeof restaurant.rating !== 'number' || restaurant.rating < 0 || restaurant.rating > 5)) {
         issues.push('Invalid rating (should be 0-5)');
       }
-      
+
       if (restaurant.totalReviews && (typeof restaurant.totalReviews !== 'number' || restaurant.totalReviews < 0)) {
         issues.push('Invalid totalReviews (should be positive number)');
       }
-      
+
       // Check for duplicate IDs
       const duplicateIndex = restaurantsData.findIndex((r, idx) => idx !== i && r.id === restaurant.id);
       if (duplicateIndex !== -1) {
         issues.push(`Duplicate ID found at index ${duplicateIndex + 1}`);
       }
-      
+
       if (issues.length > 0) {
         errors.push({
           index: i + 1,
@@ -178,7 +182,7 @@ const validateData = async () => {
         });
       }
     }
-    
+
     if (errors.length === 0) {
       console.log('✅ All restaurants are valid!');
     } else {
@@ -190,7 +194,7 @@ const validateData = async () => {
         });
       });
     }
-    
+
   } catch (error) {
     console.error('❌ Error during validation:', error.message);
   }

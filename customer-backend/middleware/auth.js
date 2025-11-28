@@ -1,9 +1,9 @@
-const jwt = require('jsonwebtoken');
-const asyncHandler = require('express-async-handler');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import asyncHandler from 'express-async-handler';
+import User from '../models/User.js';
 
 // Protect routes - verify JWT token
-const protect = asyncHandler(async (req, res, next) => {
+export const protect = asyncHandler(async (req, res, next) => {
   let token;
 
   // Check for token in header
@@ -13,10 +13,10 @@ const protect = asyncHandler(async (req, res, next) => {
 
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       // Get user from database
       const user = await User.findById(decoded.id).select('-password');
-      
+
       if (!user) {
         return res.status(401).json({
           success: false,
@@ -44,7 +44,7 @@ const protect = asyncHandler(async (req, res, next) => {
 });
 
 // Role-based access control
-const authorize = (...roles) => {
+export const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
@@ -55,5 +55,3 @@ const authorize = (...roles) => {
     next();
   };
 };
-
-module.exports = { protect, authorize };

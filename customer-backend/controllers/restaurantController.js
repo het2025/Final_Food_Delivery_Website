@@ -1,21 +1,21 @@
-const asyncHandler = require('express-async-handler');
-const Restaurant = require('../models/Restaurant');
-const mongoose = require('mongoose');
+import asyncHandler from 'express-async-handler';
+import Restaurant from '../models/Restaurant.js';
+import mongoose from 'mongoose';
+import MenuItem from '../models/MenuItem.js';
+import MenuCategory from '../models/MenuCategory.js';
 
-const MenuItem = require('../models/MenuItem');
-const MenuCategory = require('../models/MenuCategory');
 // @desc    Get all restaurants with pagination and filters
 // @route   GET /api/restaurants
 // @access  Public
-const getRestaurants = asyncHandler(async (req, res) => {
+export const getRestaurants = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 20; // Increased default limit
     const startIndex = (page - 1) * limit;
-    
+
     // Build query object
     let query = { status: 'active', isActive: true };
-    
+
     // --- ADVANCED FILTERING LOGIC ---
 
     // Filter by MULTIPLE cuisines
@@ -23,28 +23,28 @@ const getRestaurants = asyncHandler(async (req, res) => {
       const cuisinesArray = req.query.cuisines.split(',').map(c => c.trim());
       query.cuisine = { $in: cuisinesArray };
     }
-    
+
     // Filter by area
     if (req.query.area) {
       query['location.area'] = { $regex: req.query.area, $options: 'i' };
     }
-    
+
     // Filter by rating
     if (req.query.minRating) {
       query.rating = { $gte: parseFloat(req.query.minRating) };
     }
-    
+
     // Filter by priceRange (e.g., '₹', '₹₹', '₹₹₹')
     if (req.query.priceRange) {
       query.priceRange = req.query.priceRange;
     }
-    
+
     // Filter by features (e.g., 'Free Delivery', 'Promoted')
     if (req.query.features) {
       const featuresArray = req.query.features.split(',').map(f => f.trim());
       query.features = { $all: featuresArray };
     }
-    
+
     // Filter by max delivery time
     if (req.query.maxDeliveryTime) {
       const maxTime = parseInt(req.query.maxDeliveryTime, 10);
@@ -70,18 +70,18 @@ const getRestaurants = asyncHandler(async (req, res) => {
         { 'menu.category': { $regex: searchTerm, $options: 'i' } }
       ];
     }
-    
+
     // --- SORTING ---
     let sortOption = {};
     // Correctly use 'sortBy' from frontend or 'sort' as a fallback
-    const sortBy = req.query.sortBy || req.query.sort; 
+    const sortBy = req.query.sortBy || req.query.sort;
     switch (sortBy) {
       case 'rating':
         sortOption = { rating: -1 };
         break;
       case 'deliveryTime':
         // sort by deliveryTime ascending
-        sortOption = { deliveryTime: 1 }; 
+        sortOption = { deliveryTime: 1 };
         break;
       case 'newest':
         sortOption = { createdAt: -1 };
@@ -133,7 +133,7 @@ const getRestaurants = asyncHandler(async (req, res) => {
 // @desc    Get restaurant by ID with full menu
 // @route   GET /api/restaurants/:id
 // @access  Public
-const getRestaurantById = asyncHandler(async (req, res) => {
+export const getRestaurantById = asyncHandler(async (req, res) => {
   try {
     console.log('🔍 Fetching restaurant ID:', req.params.id);
 
@@ -195,11 +195,11 @@ const getRestaurantById = asyncHandler(async (req, res) => {
           .filter(cat => {
             // Skip invalid categories
             const isValid = cat.category &&
-                          cat.category !== 'cat_0' &&
-                          !cat.category.startsWith('cat_') &&
-                          cat.items &&
-                          Array.isArray(cat.items) &&
-                          cat.items.length > 0;
+              cat.category !== 'cat_0' &&
+              !cat.category.startsWith('cat_') &&
+              cat.items &&
+              Array.isArray(cat.items) &&
+              cat.items.length > 0;
 
             if (!isValid) {
               console.log('⚠️ Skipping invalid category:', cat.category);
@@ -309,11 +309,11 @@ const getRestaurantById = asyncHandler(async (req, res) => {
 // @desc    Search restaurants by dish/category
 // @route   GET /api/restaurants/search/:query
 // @access  Public
-const searchRestaurants = asyncHandler(async (req, res) => {
+export const searchRestaurants = asyncHandler(async (req, res) => {
   try {
     const { query } = req.params;
     const limit = parseInt(req.query.limit, 10) || 50; // Increased limit for better results
-    
+
     if (!query || query.trim().length === 0) {
       return res.status(400).json({
         success: false,
@@ -322,7 +322,7 @@ const searchRestaurants = asyncHandler(async (req, res) => {
     }
 
     const searchTerm = query.trim();
-    
+
     // ✅ ENHANCED: Multi-strategy search approach
     const searchQueries = [
       // Strategy 1: Exact dish name matches
@@ -364,14 +364,14 @@ const searchRestaurants = asyncHandler(async (req, res) => {
     ];
 
     // Execute all search strategies and combine results
-    const searchPromises = searchQueries.map(searchQuery => 
+    const searchPromises = searchQueries.map(searchQuery =>
       Restaurant.find(searchQuery)
         .select('-__v')
         .lean()
     );
 
     const results = await Promise.all(searchPromises);
-    
+
     // Combine and deduplicate results using Map
     const combinedResults = new Map();
     results.forEach(resultSet => {
@@ -387,20 +387,20 @@ const searchRestaurants = asyncHandler(async (req, res) => {
 
     // ✅ NEW: Sort by relevance (restaurants with matching menu items first)
     restaurants.sort((a, b) => {
-      const aHasMenuItem = a.menu?.some(category => 
-        category.items?.some(item => 
+      const aHasMenuItem = a.menu?.some(category =>
+        category.items?.some(item =>
           item.name?.toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
-      const bHasMenuItem = b.menu?.some(category => 
-        category.items?.some(item => 
+      const bHasMenuItem = b.menu?.some(category =>
+        category.items?.some(item =>
           item.name?.toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
 
       if (aHasMenuItem && !bHasMenuItem) return -1;
       if (!aHasMenuItem && bHasMenuItem) return 1;
-      
+
       // Secondary sort by rating
       return (b.rating || 0) - (a.rating || 0);
     });
@@ -450,11 +450,11 @@ const searchRestaurants = asyncHandler(async (req, res) => {
 // @desc    Search restaurants by menu items specifically
 // @route   GET /api/restaurants/search-menu/:query
 // @access  Public
-const searchRestaurantsByMenu = asyncHandler(async (req, res) => {
+export const searchRestaurantsByMenu = asyncHandler(async (req, res) => {
   try {
     const { query } = req.params;
     const limit = parseInt(req.query.limit, 10) || 20;
-    
+
     const restaurants = await Restaurant.aggregate([
       {
         $match: {
@@ -529,7 +529,7 @@ const searchRestaurantsByMenu = asyncHandler(async (req, res) => {
 // @desc    Get restaurant menu by ID
 // @route   GET /api/restaurants/:id/menu
 // @access  Public
-const getRestaurantMenu = asyncHandler(async (req, res) => {
+export const getRestaurantMenu = asyncHandler(async (req, res) => {
   try {
     const restaurantId = req.params.id;
     console.log('📥 Fetching menu for restaurant ID:', restaurantId);
@@ -608,10 +608,5 @@ const getRestaurantMenu = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = {
-  getRestaurants,
-  getRestaurantById,
-  searchRestaurants,
-  searchRestaurantsByMenu, // ✅ NEW export
-  getRestaurantMenu
-};
+// Also export as default object for backward compatibility if needed
+export const getAllRestaurants = getRestaurants;

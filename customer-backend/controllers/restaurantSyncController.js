@@ -1,8 +1,8 @@
-const Restaurant = require('../models/Restaurant');
-const mongoose = require('mongoose');
+import Restaurant from '../models/Restaurant.js';
+import mongoose from 'mongoose';
 
 // POST /api/restaurants/sync
-const syncRestaurant = async (req, res) => {
+export const syncRestaurant = async (req, res) => {
   try {
     const restaurantData = req.body;
 
@@ -63,13 +63,36 @@ const syncRestaurant = async (req, res) => {
     const restaurantsCollection = db.collection('restaurants');
     const newRestaurantsCollection = db.collection('new_registered_restaurants');
 
+    // ✅ FIXED: Check for duplicates using BOTH _id and restaurantId
+    // Build query to check multiple identifiers
+    const idQuery = [];
+
+    // Check restaurantId (string)
+    if (dataToSync.restaurantId) {
+      idQuery.push({ restaurantId: dataToSync.restaurantId });
+    }
+
+    // Check _id (ObjectId) - important because restaurant-backend sends this!
+    if (restaurantData._id) {
+      const objectId = new mongoose.Types.ObjectId(restaurantData._id);
+      idQuery.push({ _id: objectId });
+    }
+
+    // If we have no identifiers to check, reject the request
+    if (idQuery.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid identifier (_id or restaurantId) provided'
+      });
+    }
+
     // 1. Check if it exists in MAIN collection (Approved)
-    const existingMain = await restaurantsCollection.findOne({ restaurantId: dataToSync.restaurantId });
+    const existingMain = await restaurantsCollection.findOne({ $or: idQuery });
 
     if (existingMain) {
       console.log('🔄 Restaurant found in MAIN collection, updating...');
       await restaurantsCollection.updateOne(
-        { restaurantId: dataToSync.restaurantId },
+        { _id: existingMain._id },
         { $set: dataToSync }
       );
       console.log('✅ Main restaurant updated');
@@ -77,16 +100,16 @@ const syncRestaurant = async (req, res) => {
     }
 
     // 2. Check if it exists in PENDING collection (Unapproved)
-    const existingPending = await newRestaurantsCollection.findOne({ restaurantId: dataToSync.restaurantId });
+    const existingPending = await newRestaurantsCollection.findOne({ $or: idQuery });
 
     if (existingPending) {
       console.log('🔄 Restaurant found in PENDING collection, updating...');
       await newRestaurantsCollection.updateOne(
-        { restaurantId: dataToSync.restaurantId },
+        { _id: existingPending._id },
         { $set: dataToSync }
       );
       console.log('✅ Pending restaurant updated');
-      return res.json({ success: true, message: 'Restaurant updated in pending collection' });
+      return res.json({ success: true, message: 'Restaurant updated in pending collection', data: existingPending });
     }
 
     // 3. New Restaurant -> Insert into PENDING collection
@@ -121,7 +144,7 @@ const syncRestaurant = async (req, res) => {
 };
 
 // GET /api/restaurants/newly-registered
-const getNewlyRegisteredRestaurants = async (req, res) => {
+export const getNewlyRegisteredRestaurants = async (req, res) => {
   try {
     console.log('🔍 Fetching newly registered restaurants...');
 
@@ -157,9 +180,4 @@ const getNewlyRegisteredRestaurants = async (req, res) => {
       error: error.message
     });
   }
-};
-
-module.exports = {
-  syncRestaurant,
-  getNewlyRegisteredRestaurants
 };

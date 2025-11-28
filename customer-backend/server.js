@@ -1,20 +1,43 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const connectDB = require('./config/database');
-const { errorHandler } = require('./middleware/errorMiddleware');
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import http from 'http';
+import { Server } from 'socket.io';
+import connectDB from './config/database.js';
+import { errorHandler } from './middleware/errorMiddleware.js';
 
-const http = require('http');
-const { Server } = require('socket.io');
+// Import models
+import './models/index.js';
+
+// Import routes
+import locationRoutes from './routes/locationRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+import geocodeRoutes from './routes/geocodeRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import authRoutes from './routes/auth.js';
+import restaurantRoutes from './routes/restaurants.js';
+import userRoutes from './routes/users.js';
+import addressRoutes from './routes/addresses.js';
+
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 
+// Define allowed origins
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : [
+    'http://localhost:5173', // Customer frontend
+    'http://localhost:3000',
+    process.env.FRONTEND_URL
+  ].filter(Boolean);
+
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: '*', // Allow all origins for now (configure properly in production)
+    origin: allowedOrigins,
     methods: ['GET', 'POST']
   }
 });
@@ -39,27 +62,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Import route files
-const locationRoutes = require('./routes/locationRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const geocodeRoutes = require('./routes/geocodeRoutes');
-const reviewRoutes = require('./routes/reviewRoutes');
-
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 connectDB();
 
-// Import all models
-require('./models');
-
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:5173', // Customer frontend
-    'http://localhost:3000',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -81,7 +91,6 @@ app.get('/', (req, res) => {
       orders: '/api/orders',
       addresses: '/api/addresses',
       location: '/api/location',
-      location: '/api/location',
       geocode: '/api/geocode',
       reviews: '/api/reviews'
     }
@@ -89,14 +98,14 @@ app.get('/', (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/restaurants', require('./routes/restaurants'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/addresses', require('./routes/addresses'));
-app.use('/api/orders', orderRoutes); // ✅ Single orders route
+app.use('/api/auth', authRoutes);
+app.use('/api/restaurants', restaurantRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/addresses', addressRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/location', locationRoutes);
-app.use('/api/geocode', geocodeRoutes); // ✅ OpenStreetMap geocoding
-app.use('/api/reviews', reviewRoutes); // ✅ Restaurant reviews
+app.use('/api/geocode', geocodeRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Debug log for geocode routes
 console.log('📍 Geocode routes registered at /api/geocode');
@@ -116,7 +125,6 @@ app.use('*', (req, res) => {
       '/api/users',
       '/api/orders',
       '/api/addresses',
-      '/api/location',
       '/api/location',
       '/api/geocode',
       '/api/reviews'
@@ -143,7 +151,6 @@ process.on('unhandledRejection', (err) => {
   server.close(() => process.exit(1));
 });
 
-// Handle uncaught exceptions
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('❌ Uncaught Exception:', err);

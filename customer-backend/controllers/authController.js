@@ -1,7 +1,7 @@
-const asyncHandler = require('express-async-handler');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import asyncHandler from 'express-async-handler';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -13,7 +13,7 @@ const generateToken = (id) => {
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
-const register = asyncHandler(async (req, res) => {
+export const register = asyncHandler(async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
@@ -109,13 +109,13 @@ const register = asyncHandler(async (req, res) => {
     // Handle MongoDB duplicate key error (E11000)
     if (error.code === 11000) {
       console.log('Duplicate key error detected');
-      
+
       // Extract field name from error
       let field = 'email';
       if (error.keyValue && error.keyValue.email) {
         field = 'email';
       }
-      
+
       return res.status(400).json({
         success: false,
         message: `User with this ${field} already exists. Please login instead.`
@@ -143,7 +143,7 @@ const register = asyncHandler(async (req, res) => {
 // @desc    Login user
 // @route   POST /api/auth/login
 // @access  Public
-const login = asyncHandler(async (req, res) => {
+export const login = asyncHandler(async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -215,7 +215,7 @@ const login = asyncHandler(async (req, res) => {
 // @desc    Get user profile
 // @route   GET /api/auth/profile
 // @access  Private
-const getProfile = asyncHandler(async (req, res) => {
+export const getProfile = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate('favorites', 'name image rating location.area');
 
@@ -257,7 +257,7 @@ const getProfile = asyncHandler(async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 // @access  Private
-const updateProfile = asyncHandler(async (req, res) => {
+export const updateProfile = asyncHandler(async (req, res) => {
   try {
     const { name, phone } = req.body;
 
@@ -305,17 +305,9 @@ const updateProfile = asyncHandler(async (req, res) => {
 // @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
-const logout = asyncHandler(async (req, res) => {
+export const logout = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Logout successful'
   });
 });
-
-module.exports = {
-  register,
-  login,
-  getProfile,
-  updateProfile,
-  logout
-};

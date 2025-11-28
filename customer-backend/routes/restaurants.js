@@ -1,20 +1,18 @@
-const express = require('express');
-const router = express.Router();
-
-// ✅ IMPORT THE NEW SYNC CONTROLLER (sync endpoints)
-const {
+import express from 'express';
+import {
   syncRestaurant,
   getNewlyRegisteredRestaurants
-} = require('../controllers/restaurantSyncController');
+} from '../controllers/restaurantSyncController.js';
+import * as restaurantController from '../controllers/restaurantController.js';
+import Restaurant from '../models/Restaurant.js';
 
-// Import restaurantController as an object and pick functions with fallbacks
-const restaurantController = require('../controllers/restaurantController');
+const router = express.Router();
 
-const getAllRestaurants = restaurantController.getAllRestaurants || restaurantController.getRestaurants || restaurantController.getRestaurants;
-const getRestaurantById = restaurantController.getRestaurantById || restaurantController.getById || restaurantController.getRestaurantById;
-const searchRestaurants = restaurantController.searchRestaurants || restaurantController.search || restaurantController.searchRestaurants;
-const searchRestaurantsByMenu = restaurantController.searchRestaurantsByMenu || restaurantController.searchRestaurantsByMenu;
-const getRestaurantMenu = restaurantController.getRestaurantMenu || restaurantController.getMenu || restaurantController.getRestaurantMenu;
+const getAllRestaurants = restaurantController.getAllRestaurants || restaurantController.getRestaurants;
+const getRestaurantById = restaurantController.getRestaurantById;
+const searchRestaurants = restaurantController.searchRestaurants;
+const searchRestaurantsByMenu = restaurantController.searchRestaurantsByMenu;
+const getRestaurantMenu = restaurantController.getRestaurantMenu;
 
 // ✅ NEW ROUTES (Add these at the TOP)
 router.post('/sync', syncRestaurant);
@@ -37,7 +35,6 @@ router.get('/search/:query', searchRestaurants);
 // @access  Public
 router.get('/cuisines', async (req, res) => {
   try {
-    const Restaurant = require('../models/Restaurant');
     const cuisines = await Restaurant.distinct('cuisine', {
       status: 'active',
       isActive: true
@@ -64,7 +61,6 @@ router.get('/cuisines', async (req, res) => {
 // @access  Public
 router.get('/areas', async (req, res) => {
   try {
-    const Restaurant = require('../models/Restaurant');
     const areas = await Restaurant.distinct('location.area', {
       status: 'active',
       isActive: true
@@ -90,7 +86,6 @@ router.get('/areas', async (req, res) => {
 // @access  Public
 router.get('/by-cuisine/:cuisine', async (req, res) => {
   try {
-    const Restaurant = require('../models/Restaurant');
     const { cuisine } = req.params;
     const limit = parseInt(req.query.limit, 10) || 20;
 
@@ -124,7 +119,6 @@ router.get('/by-cuisine/:cuisine', async (req, res) => {
 // @access  Public
 router.get('/by-area/:area', async (req, res) => {
   try {
-    const Restaurant = require('../models/Restaurant');
     const { area } = req.params;
     const limit = parseInt(req.query.limit, 10) || 20;
 
@@ -158,7 +152,6 @@ router.get('/by-area/:area', async (req, res) => {
 // @access  Public
 router.post('/advanced-search', async (req, res) => {
   try {
-    const Restaurant = require('../models/Restaurant');
     const {
       query,
       cuisines = [],
@@ -248,4 +241,4 @@ router.get('/:id/menu', getRestaurantMenu);
 router.get('/:id', getRestaurantById);
 
 // ✅ EXPORT
-module.exports = router;
+export default router;

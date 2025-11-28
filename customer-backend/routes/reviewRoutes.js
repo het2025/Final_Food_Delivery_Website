@@ -1,12 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const {
+import express from 'express';
+import {
     addReview,
     getRestaurantReviews,
     getUserReviews,
     deleteReview
-} = require('../controllers/reviewController');
-const { protect } = require('../middleware/authMiddleware'); // Assuming authMiddleware exists
+} from '../controllers/reviewController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
+const router = express.Router();
 
 router.route('/')
     .post(protect, addReview);
@@ -20,4 +21,4 @@ router.route('/myreviews')
 router.route('/:id')
     .delete(protect, deleteReview);
 
-module.exports = router;
+export default router;

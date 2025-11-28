@@ -1,9 +1,10 @@
-const Order = require('../models/Order');
-const User = require('../models/User');
-const axios = require('axios');
+import Order from '../models/Order.js';
+import User from '../models/User.js';
+import axios from 'axios';
+import crypto from 'crypto';
 
 // Create new order
-exports.createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {
   try {
     const {
       items,
@@ -51,7 +52,6 @@ exports.createOrder = async (req, res) => {
     }
 
     // Generate unique order number
-    const crypto = require('crypto');
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const random = crypto.randomBytes(3).toString('hex').toUpperCase();
     const orderNumber = `ORD-${date}-${random}`;
@@ -162,7 +162,7 @@ exports.createOrder = async (req, res) => {
 
 
 // Get all orders for logged-in customer
-exports.getMyOrders = async (req, res) => {
+export const getMyOrders = async (req, res) => {
   try {
     const customerId = req.user.id;
     const { status, limit = 20, page = 1 } = req.query;
@@ -201,7 +201,7 @@ exports.getMyOrders = async (req, res) => {
 };
 
 // Get single order details
-exports.getOrderById = async (req, res) => {
+export const getOrderById = async (req, res) => {
   try {
     const { orderId } = req.params;
     const customerId = req.user.id;
@@ -234,7 +234,7 @@ exports.getOrderById = async (req, res) => {
 };
 
 // Cancel order
-exports.cancelOrder = async (req, res) => {
+export const cancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason } = req.body;
@@ -283,7 +283,7 @@ exports.cancelOrder = async (req, res) => {
 };
 
 // Add rating and review
-exports.rateOrder = async (req, res) => {
+export const rateOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { rating, review } = req.body;
@@ -338,7 +338,7 @@ exports.rateOrder = async (req, res) => {
 };
 
 // Update order status (called by restaurant backend)
-exports.updateOrderStatus = async (req, res) => {
+export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, acceptedAt, rejectedAt, rejectionReason } = req.body;
@@ -430,7 +430,7 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 // Validate coupon code
-exports.validateCoupon = async (req, res) => {
+export const validateCoupon = async (req, res) => {
   try {
     const { couponCode, subtotal } = req.body;
     const userId = req.user._id; // Get current user ID
@@ -566,7 +566,7 @@ exports.validateCoupon = async (req, res) => {
 };
 
 // Get all orders with status 'Ready' (Internal use for Delivery Backend)
-exports.getReadyOrders = async (req, res) => {
+export const getReadyOrders = async (req, res) => {
   try {
     // In a real app, you should verify this request comes from a trusted service (e.g. via API Key)
     const orders = await Order.find({ status: 'Ready' })
@@ -587,15 +587,4 @@ exports.getReadyOrders = async (req, res) => {
       error: error.message
     });
   }
-};
-
-module.exports = {
-  createOrder: exports.createOrder,
-  getMyOrders: exports.getMyOrders,
-  getOrderById: exports.getOrderById,
-  cancelOrder: exports.cancelOrder,
-  rateOrder: exports.rateOrder,
-  updateOrderStatus: exports.updateOrderStatus,
-  validateCoupon: exports.validateCoupon,
-  getReadyOrders: exports.getReadyOrders
 };

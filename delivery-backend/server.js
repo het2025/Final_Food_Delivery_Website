@@ -25,6 +25,7 @@ const io = new Server(httpServer, {
   cors: {
     origin: [
       'http://localhost:5176', // Delivery frontend
+      'http://localhost:5177', // Delivery frontend (alternative port)
       'http://localhost:3000',
       process.env.FRONTEND_URL
     ].filter(Boolean),
@@ -45,6 +46,7 @@ connectDB();
 const corsOptions = {
   origin: [
     'http://localhost:5176', // Delivery frontend
+    'http://localhost:5177', // Delivery frontend (alternative port)
     'http://localhost:3000',
     'http://localhost:5173',
     process.env.FRONTEND_URL
@@ -115,20 +117,20 @@ process.on('unhandledRejection', (err) => {
 const pollReadyOrders = async () => {
   try {
     const CUSTOMER_BACKEND_URL = process.env.CUSTOMER_BACKEND_URL || 'http://localhost:5000';
-    
+
     // Fetch orders with status 'Ready'
     const response = await axios.get(`${CUSTOMER_BACKEND_URL}/api/orders/internal/ready`);
-    
+
     if (response.data.success && response.data.data.length > 0) {
       const readyOrders = response.data.data;
-      
+
       for (const order of readyOrders) {
         // Check if we already have this order
         const exists = await DeliveryOrder.findOne({ orderId: order._id });
-        
+
         if (!exists) {
           console.log(`📥 Polling found new ready order: ${order.orderNumber}`);
-          
+
           // Create Delivery Order
           const deliveryOrder = new DeliveryOrder({
             orderId: order._id,
@@ -149,18 +151,18 @@ const pollReadyOrders = async () => {
 
           await deliveryOrder.save();
           console.log(`✅ Created delivery order from polling: ${deliveryOrder._id}`);
-          
+
           // Notify delivery boys via Socket
           if (io) {
-             io.emit('new:order', {
-                orderId: deliveryOrder._id,
-                orderNumber: deliveryOrder.orderNumber,
-                restaurantName: deliveryOrder.restaurantName,
-                deliveryAddress: deliveryOrder.deliveryAddress,
-                orderAmount: deliveryOrder.orderAmount,
-                deliveryFee: deliveryOrder.deliveryFee,
-                distance: deliveryOrder.distance
-             });
+            io.emit('new:order', {
+              orderId: deliveryOrder._id,
+              orderNumber: deliveryOrder.orderNumber,
+              restaurantName: deliveryOrder.restaurantName,
+              deliveryAddress: deliveryOrder.deliveryAddress,
+              orderAmount: deliveryOrder.orderAmount,
+              deliveryFee: deliveryOrder.deliveryFee,
+              distance: deliveryOrder.distance
+            });
           }
         }
       }
@@ -168,7 +170,7 @@ const pollReadyOrders = async () => {
   } catch (error) {
     // Silent fail for polling errors to avoid log spam, unless critical
     if (error.code !== 'ECONNREFUSED') {
-        console.error('Polling error:', error.message);
+      console.error('Polling error:', error.message);
     }
   }
 };

@@ -1,5 +1,6 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
+import dotenv from 'dotenv';
+dotenv.config();
+import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
@@ -17,26 +18,26 @@ const connectDB = async () => {
 const cleanupUsers = async () => {
   try {
     await connectDB();
-    
+
     console.log('🗑️  Starting user cleanup...');
-    
+
     // Drop the entire users collection
     await mongoose.connection.db.collection('users').drop();
     console.log('✅ Users collection dropped');
-    
+
     // Recreate the collection
     await mongoose.connection.db.createCollection('users');
     console.log('✅ Users collection recreated');
-    
+
     // Create unique index on email
     await mongoose.connection.db.collection('users').createIndex(
-      { email: 1 }, 
+      { email: 1 },
       { unique: true, background: true }
     );
     console.log('✅ Unique index on email created');
-    
+
     console.log('🎉 Cleanup completed successfully!');
-    
+
   } catch (error) {
     console.error('❌ Cleanup failed:', error);
   } finally {

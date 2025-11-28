@@ -1,13 +1,13 @@
-const axios = require('axios');
+import axios from 'axios';
 
 const MAPPLS_API_KEY = process.env.MAPPLS_API_KEY;
 
 
 // Search addresses
-exports.searchAddress = async (req, res) => {
+export const searchAddress = async (req, res) => {
   try {
     const { query } = req.query;
-    
+
     if (!query) {
       return res.status(400).json({
         success: false,
@@ -53,10 +53,10 @@ exports.searchAddress = async (req, res) => {
 };
 
 // Get coordinates from address (Geocoding)
-exports.getCoordinates = async (req, res) => {
+export const getCoordinates = async (req, res) => {
   try {
     const { address } = req.query;
-    
+
     if (!address) {
       return res.status(400).json({
         success: false,
@@ -110,10 +110,10 @@ exports.getCoordinates = async (req, res) => {
 };
 
 // Reverse geocoding (coordinates to address)
-exports.reverseGeocode = async (req, res) => {
+export const reverseGeocode = async (req, res) => {
   try {
     const { lat, lng } = req.query;
-    
+
     if (!lat || !lng) {
       return res.status(400).json({
         success: false,
@@ -171,10 +171,10 @@ exports.reverseGeocode = async (req, res) => {
 };
 
 // Calculate distance
-exports.calculateDistance = async (req, res) => {
+export const calculateDistance = async (req, res) => {
   try {
     const { fromLat, fromLng, toLat, toLng } = req.query;
-    
+
     if (!fromLat || !fromLng || !toLat || !toLng) {
       return res.status(400).json({
         success: false,
@@ -193,9 +193,9 @@ exports.calculateDistance = async (req, res) => {
       const distanceInKm = (distanceInMeters / 1000).toFixed(2);
       const timeInSeconds = response.data.results.durations[0][1];
       const timeInMinutes = Math.round(timeInSeconds / 60);
-      
+
       console.log(`✅ Distance calculated: ${distanceInKm} km, ${timeInMinutes} mins`);
-      
+
       res.status(200).json({
         success: true,
         data: {

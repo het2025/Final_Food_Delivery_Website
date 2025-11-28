@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const Restaurant = require('./Restaurant');
+import mongoose from 'mongoose';
+import Restaurant from './Restaurant.js';
 
 // Use the same schema as Restaurant but point to different collection
 const NewRegisteredRestaurant = mongoose.model(
@@ -8,4 +8,4 @@ const NewRegisteredRestaurant = mongoose.model(
   'new_registered_restaurants'  // ✅ Points to new collection
 );
 
-module.exports = NewRegisteredRestaurant;
+export default NewRegisteredRestaurant;

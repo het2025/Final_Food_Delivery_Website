@@ -1,12 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const {
+import express from 'express';
+import {
   getAddresses,
   addAddress,
   updateAddress,
   deleteAddress
-} = require('../controllers/addressController');
-const { protect } = require('../middleware/auth');
+} from '../controllers/addressController.js';
+import { protect } from '../middleware/auth.js';
+
+const router = express.Router();
 
 // All routes require authentication
 router.use(protect);
@@ -19,4 +20,4 @@ router.route('/:addressId')
   .put(updateAddress)
   .delete(deleteAddress);
 
-module.exports = router;
+export default router;

@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const orderSchema = new mongoose.Schema({
   // Order identification - Changed to orderNumber to match index
@@ -7,7 +8,6 @@ const orderSchema = new mongoose.Schema({
     unique: true,
     required: true,
     default: function () {
-      const crypto = require('crypto');
       const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       const random = crypto.randomBytes(3).toString('hex').toUpperCase();
       return `ORD-${date}-${random}`;
@@ -161,4 +161,4 @@ const orderSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+export default mongoose.model('Order', orderSchema);

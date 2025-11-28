@@ -1,8 +1,8 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 // Protect routes - verify JWT token
-const protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
 
   // Check if token exists in Authorization header
@@ -43,7 +43,7 @@ const protect = async (req, res, next) => {
 };
 
 // Optional: Check for specific role
-const authorize = (...roles) => {
+export const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
@@ -62,5 +62,3 @@ const authorize = (...roles) => {
     next();
   };
 };
-
-module.exports = { protect, authorize };

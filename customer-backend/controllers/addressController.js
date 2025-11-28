@@ -1,13 +1,13 @@
-const asyncHandler = require('express-async-handler');
-const User = require('../models/User');
+import asyncHandler from 'express-async-handler';
+import User from '../models/User.js';
 
 // @desc    Get user addresses
 // @route   GET /api/addresses
 // @access  Private
-exports.getAddresses = asyncHandler(async (req, res) => {
+export const getAddresses = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -30,7 +30,7 @@ exports.getAddresses = asyncHandler(async (req, res) => {
 // @desc    Add new address
 // @route   POST /api/addresses
 // @access  Private
-exports.addAddress = asyncHandler(async (req, res) => {
+export const addAddress = asyncHandler(async (req, res) => {
   try {
     const { type, street, city, state, pincode, landmark, isDefault } = req.body;
 
@@ -43,7 +43,7 @@ exports.addAddress = asyncHandler(async (req, res) => {
     }
 
     const user = await User.findById(req.user._id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -87,13 +87,13 @@ exports.addAddress = asyncHandler(async (req, res) => {
 // @desc    Update address
 // @route   PUT /api/addresses/:addressId
 // @access  Private
-exports.updateAddress = asyncHandler(async (req, res) => {
+export const updateAddress = asyncHandler(async (req, res) => {
   try {
     const { addressId } = req.params;
     const { type, street, city, state, pincode, landmark, isDefault } = req.body;
 
     const user = await User.findById(req.user._id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -102,7 +102,7 @@ exports.updateAddress = asyncHandler(async (req, res) => {
     }
 
     const address = user.addresses.id(addressId);
-    
+
     if (!address) {
       return res.status(404).json({
         success: false,
@@ -144,12 +144,12 @@ exports.updateAddress = asyncHandler(async (req, res) => {
 // @desc    Delete address
 // @route   DELETE /api/addresses/:addressId
 // @access  Private
-exports.deleteAddress = asyncHandler(async (req, res) => {
+export const deleteAddress = asyncHandler(async (req, res) => {
   try {
     const { addressId } = req.params;
 
     const user = await User.findById(req.user._id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,

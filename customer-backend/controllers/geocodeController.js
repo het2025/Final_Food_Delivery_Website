@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
 
@@ -16,10 +16,10 @@ const getPincodeFromArea = (text) => {
   return null;
 };
 
-exports.reverseGeocode = async (req, res) => {
+export const reverseGeocode = async (req, res) => {
   try {
     const { lat, lng } = req.query;
-    
+
     if (!lat || !lng) {
       return res.status(400).json({
         success: false,
@@ -50,7 +50,7 @@ exports.reverseGeocode = async (req, res) => {
       if (addr.road) parts.push(addr.road);
       if (addr.neighbourhood) parts.push(addr.neighbourhood);
       if (addr.suburb) parts.push(addr.suburb);
-      
+
       const street = parts.length ? parts.join(', ') : data.display_name.split(',')[0];
       const pincode = getPincodeFromArea(data.display_name) || addr.postcode || '';
 
@@ -75,7 +75,7 @@ exports.reverseGeocode = async (req, res) => {
   }
 };
 
-exports.searchAddress = async (req, res) => {
+export const searchAddress = async (req, res) => {
   try {
     const { query } = req.query;
     if (!query || query.length < 3) {

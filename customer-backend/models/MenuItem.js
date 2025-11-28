@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const menuItemSchema = new mongoose.Schema({
   restaurant: {
@@ -63,4 +63,4 @@ const menuItemSchema = new mongoose.Schema({
 menuItemSchema.index({ restaurant: 1, category: 1 });
 menuItemSchema.index({ restaurant: 1, isAvailable: 1 });
 
-module.exports = mongoose.model('MenuItem', menuItemSchema);
+export default mongoose.model('MenuItem', menuItemSchema);

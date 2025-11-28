@@ -176,6 +176,7 @@ export const registerRestaurantOwner = async (req, res) => {
 
     try {
       const customerDBPayload = {
+        _id: newRestaurant._id.toString(), // ✅ CRITICAL: Include _id for duplicate detection!
         restaurantId: newRestaurant._id.toString(),
         name: newRestaurant.name,
         description: newRestaurant.description,
