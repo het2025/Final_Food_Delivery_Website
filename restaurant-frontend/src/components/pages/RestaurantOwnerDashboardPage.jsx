@@ -18,9 +18,9 @@ import {
   Plus
 } from 'lucide-react';
 
-import { 
-  getDashboardStats, 
-  getRestaurantOwnerOrders 
+import {
+  getDashboardStats,
+  getRestaurantOwnerOrders
 } from '../../api/restaurantOwnerApi';
 
 function RestaurantOwnerDashboardPage() {
@@ -54,11 +54,11 @@ function RestaurantOwnerDashboardPage() {
 
         // Get orders
         const ordersRes = await getRestaurantOwnerOrders();
-        const orders = ordersRes.success && ordersRes.data?.orders 
-          ? ordersRes.data.orders 
+        const orders = ordersRes.success && ordersRes.data?.orders
+          ? ordersRes.data.orders
           : ordersRes.success && Array.isArray(ordersRes.data)
-          ? ordersRes.data
-          : [];
+            ? ordersRes.data
+            : [];
         setOrdersData(orders);
 
       } catch (err) {
@@ -75,13 +75,21 @@ function RestaurantOwnerDashboardPage() {
   // Map orders for UI, always deducting ₹30 for delivery
   const mapOrder = (order) => {
     const id = order.orderNumber || order.orderId || `#${(order._id || '').toString().slice(-6) || 'ORDER'}`;
-    const customer = order.customerName || order.user?.name || order.customer?.name || 'Customer';
+    // ✅ FIXED: Handle undefined/null customer name robustly
+    let customer = "Customer";
+    if (order.customerName && order.customerName !== 'undefined') {
+      customer = order.customerName;
+    } else if (order.user?.name) {
+      customer = order.user.name;
+    } else if (order.customer?.name) {
+      customer = order.customer.name;
+    }
     const itemsText = Array.isArray(order.items)
       ? order.items.map((item) => {
-          const qty = item.quantity || item.qty || 1;
-          const name = item.name || item.title || item.itemName || 'Item';
-          return `${qty}x ${name}`;
-        }).join(', ')
+        const qty = item.quantity || item.qty || 1;
+        const name = item.name || item.title || item.itemName || 'Item';
+        return `${qty}x ${name}`;
+      }).join(', ')
       : '—';
     const status = order.status || order.orderStatus || order.deliveryStatus || 'Pending';
     const created = order.createdAt || order.placedAt || order.created_on || null;
@@ -134,11 +142,19 @@ function RestaurantOwnerDashboardPage() {
 
   // Stats
   const totalOrders = mappedOrders.length;
-  const pendingOrders = mappedOrders.filter(o => (o.status || '').toLowerCase() === 'pending' || (o.status || '').toLowerCase() === 'placed').length;
+
+  // Pending: Only truly pending orders (Pending, Placed, Accepted, Preparing)
+  const pendingOrders = mappedOrders.filter(o => {
+    const status = (o.status || '').toLowerCase();
+    return status === 'pending' || status === 'placed' || status === 'accepted' || status === 'preparing';
+  }).length;
+
+  // Completed: Ready, Delivered, Completed, OutForDelivery
   const completedOrders = mappedOrders.filter(o => {
     const status = (o.status || '').toLowerCase();
-    return status === 'delivered' || status === 'completed' || status === 'outfordelivery';
+    return status === 'delivered' || status === 'completed' || status === 'outfordelivery' || status === 'ready';
   }).length;
+
   const totalRevenue = mappedOrders.reduce((sum, order) => sum + (order.numericTotal || 0), 0); // <== uses net!
   const totalCustomers = (() => {
     const uniqueCustomers = new Set();
@@ -161,9 +177,11 @@ function RestaurantOwnerDashboardPage() {
     { label: "Total Orders", value: String(totalOrders), icon: ShoppingCart, change: 0 },
     { label: 'Total Customers', value: String(totalCustomers), icon: Users, change: 0 },
     { label: 'Completed Orders', value: String(completedOrders), icon: CheckCircle, change: 0 },
-    { label: 'Total Revenue', value: totalRevenue > 0 
-      ? `₹${totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` 
-      : '₹0', icon: BarChart3, change: 0 }
+    {
+      label: 'Total Revenue', value: totalRevenue > 0
+        ? `₹${totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+        : '₹0', icon: BarChart3, change: 0
+    }
   ];
   const ordersByDay = groupOrdersByDay(mappedOrders);
 
@@ -268,11 +286,11 @@ function RestaurantOwnerDashboardPage() {
                       <div key={orderIdx} className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
                           <StatusIcon size={14} className={
-                            order.status.toLowerCase() === 'pending' 
-                              ? 'text-yellow-600' 
+                            order.status.toLowerCase() === 'pending'
+                              ? 'text-yellow-600'
                               : order.status.toLowerCase() === 'completed' || order.status.toLowerCase() === 'delivered'
-                              ? 'text-green-600'
-                              : 'text-blue-600'
+                                ? 'text-green-600'
+                                : 'text-blue-600'
                           } />
                           <span className="text-gray-700">{order.id}</span>
                           <span className="text-gray-500">•</span>
@@ -316,27 +334,6 @@ function RestaurantOwnerDashboardPage() {
     <div className="bg-white border border-gray-100 shadow-sm rounded-xl">
       <div className="flex flex-col items-start justify-between gap-4 p-5 border-b border-gray-200 sm:flex-row sm:items-center">
         <h2 className="text-lg font-semibold">All Orders ({totalOrders})</h2>
-        <div className="flex items-center w-full gap-3 sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
-            <input
-              type="text"
-              placeholder="Search orders..."
-              className="w-full py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9"
-            />
-          </div>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <Filter size={16} />
-            Filter
-          </button>
-          <button
-            onClick={() => setShowNewOrder(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-gradient-to-r from-orange-500 to-red-600 hover:opacity-90"
-          >
-            <Plus size={16} />
-            New Order
-          </button>
-        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -476,11 +473,10 @@ function RestaurantOwnerDashboardPage() {
         {['overview', 'orders'].map((tab) => (
           <button
             key={tab}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === tab
-                ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab
+              ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white'
+              : 'text-gray-600 hover:text-gray-900'
+              }`}
             onClick={() => setActiveTab(tab)}
           >
             <span className="capitalize">{tab}</span>

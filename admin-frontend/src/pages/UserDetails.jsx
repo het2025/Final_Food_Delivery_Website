@@ -78,26 +78,25 @@ const UserDetails = () => {
               </div>
             </div>
           </div>
-          <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-            user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}>
+          <span className={`px-4 py-2 rounded-full text-sm font-semibold ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
             {user.isActive ? 'Active' : 'Inactive'}
           </span>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 pt-6 mt-6 border-t">
-          <div className="text-center">
+        <div className="grid grid-cols-3 gap-6 pt-6 mt-6 border-t min-w-max">
+          <div className="text-center px-4">
             <p className="text-3xl font-bold text-gray-800">{stats.totalOrders || 0}</p>
-            <p className="mt-1 text-sm text-gray-600">Total Orders</p>
+            <p className="mt-1 text-sm text-gray-600 whitespace-nowrap">Total Orders</p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-gray-800">{stats.completedOrders || 0}</p>
+          <div className="text-center px-4">
+            <p className="text-3xl font-bold text-green-600">{stats.completedOrders || 0}</p>
             <p className="mt-1 text-sm text-gray-600">Completed</p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-gray-800">₹{stats.totalSpent || 0}</p>
-            <p className="mt-1 text-sm text-gray-600">Total Spent</p>
+          <div className="text-center px-4">
+            <p className="text-3xl font-bold text-primary">₹{stats.totalSpent ? stats.totalSpent.toFixed(2) : '0.00'}</p>
+            <p className="mt-1 text-sm text-gray-600 whitespace-nowrap">Total Spent</p>
           </div>
         </div>
       </div>
@@ -156,11 +155,10 @@ const UserDetails = () => {
                       ₹{order.total}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                        order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                          order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                        }`}>
                         {order.status}
                       </span>
                     </td>

@@ -66,11 +66,19 @@ function RestaurantOwnerMenuManagementPage() {
       console.log('🔍 Items response:', itemRes);
 
       // ✅ Parse categories - FIXED VERSION
+      let categoryMap = {}; // Name -> ID mapping
+      let cats = [];
+
       if (catRes && catRes.success && Array.isArray(catRes.data)) {
-        const cats = catRes.data.map((c) => ({
+        cats = catRes.data.map((c) => ({
           id: c._id,
           name: c.name
         }));
+
+        // Create map for easy lookup
+        cats.forEach(c => {
+          categoryMap[c.name] = c.id;
+        });
 
         setCategories(cats);
         console.log(`✅ Loaded ${cats.length} categories:`, cats);
@@ -81,18 +89,35 @@ function RestaurantOwnerMenuManagementPage() {
 
       // ✅ Parse items - FIXED VERSION
       if (itemRes && itemRes.success && Array.isArray(itemRes.data)) {
-        const items = itemRes.data.map((item) => ({
-          id: item._id,
-          name: item.name,
-          price: item.price,
-          categoryId: typeof item.category === 'object' ? item.category._id : item.category,
-          categoryName: typeof item.category === 'object' ? item.category.name : 'Uncategorized',
-          description: item.description || '',
-          image: item.image || '',
-          isVeg: item.isVeg !== undefined ? item.isVeg : true,
-          isPopular: item.isPopular || false,
-          preparationTime: item.preparationTime || 15
-        }));
+        const items = itemRes.data.map((item) => {
+          // Handle both object (populated) and string (embedded) categories
+          let catName = 'Uncategorized';
+          let catId = '';
+
+          if (item.category) {
+            if (typeof item.category === 'object') {
+              catName = item.category.name || 'Uncategorized';
+              catId = item.category._id;
+            } else {
+              catName = item.category; // It's a string like "Main Course"
+              // Try to find the ID from our map, otherwise leave empty or use name
+              catId = categoryMap[catName] || '';
+            }
+          }
+
+          return {
+            id: item._id,
+            name: item.name,
+            price: item.price,
+            categoryId: catId, // Used for Edit Form
+            categoryName: catName, // Used for Grouping
+            description: item.description || '',
+            image: item.image || '',
+            isVeg: item.isVeg !== undefined ? item.isVeg : true,
+            isPopular: item.isPopular || false,
+            preparationTime: item.preparationTime || 15
+          };
+        });
 
         setMenuItems(items);
         console.log(`✅ Loaded ${items.length} menu items`);
@@ -357,9 +382,8 @@ function RestaurantOwnerMenuManagementPage() {
                 {categoryFilterOptions.map((category) => (
                   <button
                     key={category}
-                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${
-                      selectedCategory === category ? 'bg-orange-50 text-orange-600' : ''
-                    }`}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${selectedCategory === category ? 'bg-orange-50 text-orange-600' : ''
+                      }`}
                     onClick={() => {
                       setSelectedCategory(category);
                       setShowCategories(false);
@@ -596,7 +620,7 @@ function RestaurantOwnerMenuManagementPage() {
               No menu items found
             </h3>
             <p className="text-gray-600">
-              {categories.length === 0 
+              {categories.length === 0
                 ? 'Create categories first, then add menu items'
                 : 'Click "Add Menu Item" to get started'}
             </p>
@@ -656,11 +680,10 @@ function RestaurantOwnerMenuManagementPage() {
                     </span>
                     <div className="flex gap-2 items-center">
                       <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          item.isVeg
+                        className={`px-2 py-1 text-xs rounded-full ${item.isVeg
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
-                        }`}
+                          }`}
                       >
                         {item.isVeg ? 'Veg' : 'Non-Veg'}
                       </span>

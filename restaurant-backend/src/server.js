@@ -30,6 +30,20 @@ const io = new Server(server, {
   }
 });
 
+// Socket.IO Connection Handler
+io.on('connection', (socket) => {
+  console.log('🔌 New client connected:', socket.id);
+
+  socket.on('join_restaurant', (restaurantId) => {
+    socket.join(`restaurant_${restaurantId}`);
+    console.log(`👨‍🍳 Client ${socket.id} joined restaurant room: restaurant_${restaurantId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ Client disconnected:', socket.id);
+  });
+});
+
 // Make io available in routes
 app.use((req, res, next) => {
   req.io = io;

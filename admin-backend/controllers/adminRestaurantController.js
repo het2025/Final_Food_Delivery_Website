@@ -38,10 +38,17 @@ export const getAllRestaurants = async (req, res) => {
       query.status = status;
     }
 
-    // Fetch from BOTH collections
+    // Fetch from BOTH collections, but exclude already-approved restaurants from new collection
     const [oldRestaurants, newRestaurants] = await Promise.all([
       restaurantsCollection.find(query).sort({ createdAt: -1 }).toArray(),
-      newRestaurantsCollection.find(query).sort({ registeredAt: -1, createdAt: -1 }).toArray()
+      newRestaurantsCollection.find({
+        ...query,
+        // Only fetch restaurants that haven't been approved yet
+        $or: [
+          { isApproved: { $ne: true } },
+          { isApproved: { $exists: false } }
+        ]
+      }).sort({ registeredAt: -1, createdAt: -1 }).toArray()
     ]);
 
     // Mark new restaurants with isNew flag

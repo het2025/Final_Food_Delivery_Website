@@ -5,7 +5,7 @@ import {
   UsersIcon,
   BuildingStorefrontIcon,
   ShoppingCartIcon,
-  CurrencyDollarIcon,
+  CurrencyRupeeIcon,
   ArrowTrendingUpIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
@@ -40,7 +40,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [statsRes, activityRes] = await Promise.all([
         dashboardAPI.getStats(),
         dashboardAPI.getActivity(15)
@@ -73,7 +73,7 @@ const Dashboard = () => {
     return (
       <div className="p-4 border border-red-200 rounded-lg bg-red-50">
         <p className="text-red-600">{error}</p>
-        <button 
+        <button
           onClick={fetchDashboardData}
           className="px-4 py-2 mt-2 text-white bg-red-600 rounded hover:bg-red-700"
         >
@@ -118,8 +118,8 @@ const Dashboard = () => {
         />
         <StatCard
           title="Total Revenue"
-          value={`₹${stats?.overview?.totalRevenue || '0.00'}`}
-          icon={CurrencyDollarIcon}
+          value={`₹${stats?.overview?.totalRevenue ? Number(stats.overview.totalRevenue).toFixed(2) : '0.00'}`}
+          icon={CurrencyRupeeIcon}
           color="bg-yellow-500"
           link="/orders"
         />
@@ -184,12 +184,11 @@ const Dashboard = () => {
                     ₹{order.total}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
                       order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                      order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
+                        order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-blue-100 text-blue-800'
+                      }`}>
                       {order.status}
                     </span>
                   </td>

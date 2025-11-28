@@ -196,7 +196,7 @@ function RestaurantOwnerProfileSettingsPage() {  // Renamed for consistency
       </div>
 
       {/* Messages */}
-      {backendError && (  
+      {backendError && (
         <div className="flex gap-2 items-center px-4 py-3 mb-4 text-sm text-red-700 bg-red-50 rounded-lg">
           <AlertCircle size={16} />
           {backendError}
@@ -253,13 +253,17 @@ function RestaurantOwnerProfileSettingsPage() {  // Renamed for consistency
                   type="email"
                   name="email"
                   value={profileData.email}
-                  onChange={handleProfileChange}
+                  // onChange={handleProfileChange} // ✅ Email cannot be changed
                   placeholder="your@email.com"
-                  className="py-3 pr-4 pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-300 focus:outline-none disabled:opacity-50"
+                  className="py-3 pr-4 pl-10 w-full rounded-lg border border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed focus:outline-none"
                   required
-                  disabled={saving}
+                  disabled={true} // ✅ Read-only
+                  readOnly
                 />
               </div>
+              <p className="mt-1 text-xs text-red-500">
+                * Email cannot be changed. Please contact support for assistance.
+              </p>
             </div>
 
             <div>

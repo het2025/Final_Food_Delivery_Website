@@ -3,10 +3,12 @@ import {
   ClipboardList, CheckCircle, Clock, XCircle, IndianRupee, X,
   MapPin, User, Phone, Package
 } from 'lucide-react';
+import { io } from 'socket.io-client';
 import {
   getRestaurantOwnerOrders,
   updateRestaurantOwnerOrderStatus,
-  getRestaurantOwnerOrderById
+  getRestaurantOwnerOrderById,
+  getCurrentRestaurantOwner
 } from '../../api/restaurantOwnerApi';
 
 function RestaurantOwnerOrdersPage() {
@@ -35,7 +37,15 @@ function RestaurantOwnerOrdersPage() {
   // UPDATED: always subtract ₹30 from all total calculations
   const mapOrderFromBackend = (order) => {
     const id = order.orderNumber || order.orderId || order._id || order.id || "Unknown";
-    const customer = order.customerName || order.user?.name || order.customer?.name || "Customer";
+    // ✅ FIXED: Handle undefined/null customer name robustly
+    let customer = "Customer";
+    if (order.customerName && order.customerName !== 'undefined') {
+      customer = order.customerName;
+    } else if (order.user?.name) {
+      customer = order.user.name;
+    } else if (order.customer?.name) {
+      customer = order.customer.name;
+    }
     let itemsText = '—';
     if (Array.isArray(order.items) && order.items.length > 0) {
       itemsText = order.items
@@ -88,8 +98,13 @@ function RestaurantOwnerOrdersPage() {
     );
   };
 
+
+  // ... state variables
+
   useEffect(() => {
     let isFirstLoad = true;
+    let socket = null;
+
     const loadOrders = async () => {
       try {
         if (isFirstLoad) setLoading(true);
@@ -113,9 +128,51 @@ function RestaurantOwnerOrdersPage() {
         setLoading(false);
       }
     };
+
+    const setupSocket = async () => {
+      try {
+        // Get current owner to find restaurant ID
+        // Note: Ideally, getRestaurantOwnerOrders should return restaurantId or we fetch it separately
+        // For now, we'll try to get it from the profile or assume the backend handles the join if we send the token
+        // But the backend expects 'join_restaurant' with restaurantId.
+        // Let's fetch the profile or orders first to get the ID.
+
+        // Actually, let's just connect. The backend needs restaurantId.
+        // We can get it from the first order if available, or fetch profile.
+        // Let's fetch profile to be safe.
+        const profileRes = await getCurrentRestaurantOwner();
+        if (profileRes.success && profileRes.data && profileRes.data.restaurantId) {
+          const restaurantId = profileRes.data.restaurantId;
+
+          socket = io('http://localhost:5001'); // Connect to Restaurant Backend
+
+          socket.on('connect', () => {
+            console.log('🔌 Connected to Restaurant Backend Socket');
+            socket.emit('join_restaurant', restaurantId);
+          });
+
+          socket.on('new_order', (newOrder) => {
+            console.log('🔔 New Order Received via Socket:', newOrder);
+            setNewOrderNotification(true);
+            setTimeout(() => setNewOrderNotification(false), 5000);
+            loadOrders(); // Refresh orders immediately
+          });
+        }
+      } catch (err) {
+        console.error('Socket setup error:', err);
+      }
+    };
+
     loadOrders();
-    const intervalId = setInterval(loadOrders, 10000);
-    return () => clearInterval(intervalId);
+    setupSocket();
+
+    // Polling fallback (increased to 60s)
+    const intervalId = setInterval(loadOrders, 60000);
+
+    return () => {
+      clearInterval(intervalId);
+      if (socket) socket.disconnect();
+    };
   }, []);
 
   const handleStatusChange = async (orderBackendId, newStatus) => {
@@ -239,10 +296,10 @@ function RestaurantOwnerOrdersPage() {
                         order.status === 'Cancelled'
                       }
                       className={`text-xs md:text-sm font-semibold border rounded-lg px-2 py-1 ${order.status === 'Ready'
-                          ? 'text-green-600 border-green-300 bg-green-50 cursor-not-allowed'
-                          : order.status === 'Cancelled'
-                            ? 'text-red-500 border-red-300 bg-red-50 cursor-not-allowed'
-                            : 'text-yellow-600 border-yellow-300 bg-yellow-50'
+                        ? 'text-green-600 border-green-300 bg-green-50 cursor-not-allowed'
+                        : order.status === 'Cancelled'
+                          ? 'text-red-500 border-red-300 bg-red-50 cursor-not-allowed'
+                          : 'text-yellow-600 border-yellow-300 bg-yellow-50'
                         }`}
                     >
                       {allowedStatuses.map((status) => (

@@ -132,20 +132,20 @@ const Orders = () => {
                   </div>
 
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-4 gap-6 mr-6">
-                    <div className="text-center">
+                  <div className="grid grid-cols-4 gap-4 mr-6 min-w-max">
+                    <div className="text-center px-2">
                       <p className="text-2xl font-bold text-gray-800">{restaurant.totalOrders}</p>
-                      <p className="text-xs text-gray-600">Total Orders</p>
+                      <p className="text-xs text-gray-600 whitespace-nowrap">Total Orders</p>
                     </div>
-                    <div className="text-center">
+                    <div className="text-center px-2">
                       <p className="text-2xl font-bold text-yellow-600">{restaurant.pendingOrders}</p>
                       <p className="text-xs text-gray-600">Pending</p>
                     </div>
-                    <div className="text-center">
+                    <div className="text-center px-2">
                       <p className="text-2xl font-bold text-green-600">{restaurant.completedOrders}</p>
                       <p className="text-xs text-gray-600">Completed</p>
                     </div>
-                    <div className="text-center">
+                    <div className="text-center px-2">
                       <p className="text-2xl font-bold text-primary">
                         ₹{(restaurant.totalRevenue || 0).toFixed(2)}
                       </p>

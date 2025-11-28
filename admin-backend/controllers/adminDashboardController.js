@@ -29,6 +29,14 @@ export const getDashboardStats = async (req, res) => {
     const customerConn = await getCustomerDB();
     const restaurantConn = await getRestaurantDB();
 
+    // Ensure connections are ready
+    if (customerConn.readyState !== 1) {
+      await customerConn.asPromise();
+    }
+    if (restaurantConn.readyState !== 1) {
+      await restaurantConn.asPromise();
+    }
+
     // Get collections
     const usersCollection = customerConn.collection('users');
     const restaurantsCollection = customerConn.collection('restaurants');
@@ -48,26 +56,26 @@ export const getDashboardStats = async (req, res) => {
     ] = await Promise.all([
       // Total users
       usersCollection.countDocuments({ role: 'customer' }),
-      
+
       // Total active restaurants
       restaurantsCollection.countDocuments({ status: 'active', isActive: true }),
-      
+
       // Newly registered restaurants (pending approval)
       newRestaurantsCollection.countDocuments({ isNewlyRegistered: true }),
-      
+
       // Total orders
       ordersCollection.countDocuments({}),
-      
+
       // Total restaurant owners
       restaurantOwnersCollection.countDocuments({ isActive: true }),
-      
+
       // Recent 10 orders
       ordersCollection
         .find({})
         .sort({ createdAt: -1 })
         .limit(10)
         .toArray(),
-      
+
       // Revenue calculation (sum of completed orders)
       ordersCollection.aggregate([
         { $match: { status: 'Delivered', paymentStatus: 'Paid' } },
@@ -132,6 +140,12 @@ export const getDashboardStats = async (req, res) => {
 export const getRecentActivity = async (req, res) => {
   try {
     const customerConn = await getCustomerDB();
+
+    // Ensure connection is ready
+    if (customerConn.readyState !== 1) {
+      await customerConn.asPromise();
+    }
+
     const limit = parseInt(req.query.limit) || 20;
 
     const usersCollection = customerConn.collection('users');

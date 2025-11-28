@@ -32,7 +32,7 @@ export const getOrdersByRestaurant = async (req, res) => {
           restaurantName: { $first: '$restaurantName' },
           totalOrders: { $sum: 1 },
 
-          // Pending orders - match multiple possible statuses
+          // Pending orders - match multiple possible statuses (excluding Ready)
           pendingOrders: {
             $sum: {
               $cond: [
@@ -48,11 +48,13 @@ export const getOrdersByRestaurant = async (req, res) => {
             }
           },
 
-          // Completed orders
+          // Completed orders - count Delivered and Ready status
           completedOrders: {
             $sum: {
               $cond: [
-                { $eq: ['$status', 'Delivered'] },
+                {
+                  $in: ['$status', ['Delivered', 'Ready']]
+                },
                 1,
                 0
               ]
