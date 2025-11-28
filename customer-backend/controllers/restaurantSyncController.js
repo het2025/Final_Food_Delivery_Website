@@ -153,9 +153,11 @@ export const getNewlyRegisteredRestaurants = async (req, res) => {
     const db = mongoose.connection.db;
     const newRestaurantsCollection = db.collection('new_registered_restaurants');
 
+    // ✅ FIXED: Only show APPROVED restaurants to customers
     const restaurants = await newRestaurantsCollection.find({
       status: 'active',
-      isActive: true
+      isActive: true,
+      isApproved: true  // ✅ CRITICAL: Only show admin-approved restaurants
     })
       .sort({ approvedAt: -1, createdAt: -1 })
       .limit(50)

@@ -107,10 +107,59 @@ export const getPendingRestaurants = async (req, res) => {
 
     console.log(`Found ${pendingRestaurants.length} pending restaurants for approval`);
 
+    // ✅ NEW: Fetch owner data from restaurant-backend database
+    let restaurantsWithOwners = pendingRestaurants;
+
+    try {
+      const restaurantConn = mongoose.createConnection(
+        process.env.RESTAURANT_DB_URI || process.env.MONGO_URI
+      );
+      await restaurantConn.asPromise();
+
+      // Get all unique owner IDs
+      const ownerIds = pendingRestaurants
+        .map(r => r.owner)
+        .filter(Boolean);
+
+      if (ownerIds.length > 0) {
+        // Fetch all owners in one query
+        const RestaurantOwnerSchema = new mongoose.Schema({}, { strict: false });
+        const RestaurantOwner = restaurantConn.model('RestaurantOwner', RestaurantOwnerSchema);
+
+        const owners = await RestaurantOwner.find({
+          _id: { $in: ownerIds }
+        }).lean();
+
+        // Create owner lookup map
+        const ownerMap = new Map();
+        owners.forEach(owner => {
+          ownerMap.set(owner._id.toString(), owner);
+        });
+
+        // Merge owner data into restaurants
+        restaurantsWithOwners = pendingRestaurants.map(restaurant => {
+          const owner = ownerMap.get(restaurant.owner?.toString());
+          return {
+            ...restaurant,
+            ownerName: owner?.name || 'N/A',
+            ownerEmail: owner?.email || '',
+            ownerPhone: owner?.phone || restaurant.contact?.phone || ''
+          };
+        });
+
+        console.log(`✅ Added owner data to ${restaurantsWithOwners.length} restaurants`);
+      }
+
+      await restaurantConn.close();
+    } catch (ownerError) {
+      console.error('⚠️ Failed to fetch owner data:', ownerError.message);
+      // Continue without owner data - better to show restaurants than fail completely
+    }
+
     res.status(200).json({
       success: true,
-      data: pendingRestaurants,
-      count: pendingRestaurants.length
+      data: restaurantsWithOwners,
+      count: restaurantsWithOwners.length
     });
   } catch (error) {
     console.error('Get pending restaurants error:', error);
