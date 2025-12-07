@@ -116,13 +116,13 @@ const Dashboard = () => {
           color="bg-purple-500"
           link="/orders"
         />
-        <StatCard
+        {/* <StatCard
           title="Total Revenue"
           value={`₹${stats?.overview?.totalRevenue ? Number(stats.overview.totalRevenue).toFixed(2) : '0.00'}`}
           icon={CurrencyRupeeIcon}
           color="bg-yellow-500"
           link="/orders"
-        />
+        /> */}
       </div>
 
       {/* Pending Approvals Alert */}
