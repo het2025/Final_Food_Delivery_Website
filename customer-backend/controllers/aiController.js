@@ -86,14 +86,20 @@ export const chatWithAI = async (req, res) => {
                     activeOrdersList = activeOrders.map(o =>
                         `Order ID: ${o._id} | Restaurant: ${o.restaurantName} | Status: ${o.status} | Items: ${o.items.length} items`
                     ).join('\n');
-
                     orderContext = `USER HAS ACTIVE ORDERS:\n${activeOrdersList}`;
                 } else {
-                    // Fallback to last historical order for context
-                    const lastOrder = await Order.findOne({ customer: userId }).sort({ createdAt: -1 }); // Fixed: 'customer' field
-                    if (lastOrder) {
-                        orderContext = `User's last completed order was from ${lastOrder.restaurantName} (Status: ${lastOrder.status}).`;
-                    }
+                    orderContext = "USER HAS NO ACTIVE ORDERS.";
+                }
+
+                // FETCH HISTORY (For Reorder Feature)
+                // Find the most recent DELIVERED order
+                const lastCompletedOrder = await Order.findOne({
+                    customer: userObjectId,
+                    status: 'Delivered'
+                }).sort({ createdAt: -1 });
+
+                if (lastCompletedOrder) {
+                    orderContext += `\n\nUSER HISTORY:\nLast completed meal was from ${lastCompletedOrder.restaurantName}. Items: ${lastCompletedOrder.items.map(i => i.name).join(', ')}.`;
                 }
             }
         } // Close if(userId)
@@ -136,7 +142,13 @@ export const chatWithAI = async (req, res) => {
            - "Go to cart" -> [NAVIGATE:/cart]
            - "Show profile" -> [NAVIGATE:/profile]
         
-        5. **Tone**: Enthusiastic, short, and helpful. Don't dump too much text.
+        5. **Reorder Last Meal**:
+           - If user asks "Reorder my last meal" or "What did I eat last?":
+           - Look at "USER HISTORY" in context.
+           - Reply: "Your last meal was [Items] from [Restaurant]. Want to order it again? [NAVIGATE:/restaurants?search=RESTAURANT_NAME]"
+           - Example: "Your last meal was Butter Chicken from Punjab Grill. [NAVIGATE:/restaurants?search=Punjab Grill]"
+
+        6. **Tone**: Enthusiastic, short, and helpful. Don't dump too much text.
         `;
 
         // 3. Call Groq
