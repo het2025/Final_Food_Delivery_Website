@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom' // Added useSearchParams
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search, 
-  Filter, 
-  Star, 
-  Clock, 
-  MapPin, 
+import {
+  Search,
+  Filter,
+  Star,
+  Clock,
+  MapPin,
   Heart,
   SlidersHorizontal,
   X,
@@ -20,14 +21,16 @@ import { restaurantService } from '../../services/api'
 import RestaurantCard from '../../components/RestaurantCard'
 
 const Restaurants = () => {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+
   const [sortBy, setSortBy] = useState('popular')
   const [showFilters, setShowFilters] = useState(false)
   const [showSortDropdown, setShowSortDropdown] = useState(false)
   const [favorites, setFavorites] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  
+
   // Applied filters (what's actually being used)
   const [appliedFilters, setAppliedFilters] = useState({
     priceRange: 'all',
@@ -39,7 +42,7 @@ const Restaurants = () => {
     features: [],
     distance: 10
   })
-  
+
   // Temporary filters (what user is selecting)
   const [tempFilters, setTempFilters] = useState({
     priceRange: 'all',
@@ -51,7 +54,7 @@ const Restaurants = () => {
     features: [],
     distance: 10
   })
-  
+
   // Dynamic data states
   const [restaurants, setRestaurants] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -77,6 +80,14 @@ const Restaurants = () => {
     loadCuisines()
   }, [currentPage, sortBy, searchQuery, appliedFilters])
 
+  // Sync available search query from URL to state
+  useEffect(() => {
+    const query = searchParams.get('search');
+    if (query !== null && query !== searchQuery) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
+
   const loadCuisines = async () => {
     try {
       const response = await restaurantService.getCuisines()
@@ -92,7 +103,7 @@ const Restaurants = () => {
     try {
       setLoading(true)
       setError('')
-      
+
       const params = {
         page: currentPage,
         limit: 20,
@@ -105,29 +116,29 @@ const Restaurants = () => {
       }
 
       // --- Add all applied filters to the params object ---
-      
+
       // Price Range
       if (appliedFilters.priceRange !== 'all') {
         if (appliedFilters.priceRange === 'budget') params.priceRange = '₹';
         if (appliedFilters.priceRange === 'mid') params.priceRange = '₹₹';
         if (appliedFilters.priceRange === 'premium') params.priceRange = '₹₹₹';
       }
-      
+
       // Minimum Rating
       if (appliedFilters.minRating > 0) {
         params.minRating = appliedFilters.minRating;
       }
-      
+
       // Max Delivery Time
       if (appliedFilters.maxDeliveryTime < 60) {
         params.maxDeliveryTime = appliedFilters.maxDeliveryTime;
       }
-      
+
       // Cuisines
       if (appliedFilters.cuisines.length > 0) {
         params.cuisines = appliedFilters.cuisines.join(',');
       }
-      
+
       // Features
       if (appliedFilters.features.length > 0) {
         params.features = appliedFilters.features.join(',');
@@ -144,7 +155,7 @@ const Restaurants = () => {
       }
 
       const response = await restaurantService.getRestaurants(params)
-      
+
       if (response.success) {
         setRestaurants(response.data)
         setTotalPages(response.totalPages)
@@ -279,11 +290,10 @@ const Restaurants = () => {
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={`px-4 py-2 rounded-lg transition-colors ${
-            currentPage === i
-              ? 'bg-orange-500 text-white'
-              : 'bg-white border border-gray-300 hover:bg-gray-50'
-          }`}
+          className={`px-4 py-2 rounded-lg transition-colors ${currentPage === i
+            ? 'bg-orange-500 text-white'
+            : 'bg-white border border-gray-300 hover:bg-gray-50'
+            }`}
         >
           {i}
         </button>
@@ -322,7 +332,7 @@ const Restaurants = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="pt-20">
         {/* Hero Section */}
         <div className="py-16 text-white bg-gradient-to-r from-orange-500 to-red-500">
@@ -330,16 +340,16 @@ const Restaurants = () => {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="md:max-w-2xl"            
+              className="md:max-w-2xl"
             >
               <h1 className="mb-4 text-4xl font-bold md:text-5xl">
                 Discover Amazing Restaurants
               </h1>
-        
+
               <p className="mb-10 text-xl opacity-90">
                 Find your favorite cuisines delivered fast to your doorstep
               </p>
-        
+
               {/* Search Bar */}
               <div className="relative">
                 <Search
@@ -369,7 +379,7 @@ const Restaurants = () => {
           {error && (
             <div className="px-4 py-3 mb-6 text-red-600 border border-red-200 rounded-lg bg-red-50">
               {error}
-              <button 
+              <button
                 onClick={loadRestaurants}
                 className="ml-4 underline hover:text-red-800"
               >
@@ -435,9 +445,8 @@ const Restaurants = () => {
                           setCurrentPage(1)
                           setShowSortDropdown(false)
                         }}
-                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3 ${
-                          sortBy === option.value ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
-                        }`}
+                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3 ${sortBy === option.value ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
+                          }`}
                       >
                         <span className="text-lg">{option.icon}</span>
                         <span className="font-medium">{option.label}</span>
@@ -539,7 +548,7 @@ const Restaurants = () => {
               className="absolute inset-0 bg-black bg-opacity-50"
               onClick={() => setShowFilters(false)}
             />
-            
+
             {/* Filter Panel */}
             <motion.div
               initial={{ x: -400 }}

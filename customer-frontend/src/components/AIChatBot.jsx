@@ -72,7 +72,7 @@ const AIChatBot = () => {
                 let replyText = data.reply;
                 let navAction = null;
 
-                const navMatch = replyText.match(/\[NAVIGATE:([a-zA-Z0-9/_-]+)\]/);
+                const navMatch = replyText.match(/\[NAVIGATE:([^\]]+)\]/);
                 if (navMatch) {
                     navAction = navMatch[1];
                     replyText = replyText.replace(navMatch[0], '').trim();
@@ -158,8 +158,8 @@ const AIChatBot = () => {
                                     </div>
 
                                     <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm text-sm leading-relaxed ${msg.sender === 'user'
-                                            ? 'bg-orange-500 text-white rounded-tr-none'
-                                            : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+                                        ? 'bg-orange-500 text-white rounded-tr-none'
+                                        : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
                                         } ${msg.isError ? 'bg-red-50 text-red-600 border-red-100' : ''}`}>
                                         <p className="whitespace-pre-wrap">{msg.text}</p>
 
