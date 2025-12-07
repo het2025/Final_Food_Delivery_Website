@@ -1,5 +1,6 @@
 // import { GoogleGenerativeAI } from "@google/generative-ai"; // Replaced by Groq
 import Groq from "groq-sdk";
+import mongoose from 'mongoose'; // Added mongoose
 import Restaurant from '../models/Restaurant.js';
 import Order from '../models/Order.js';
 
@@ -50,14 +51,52 @@ export const chatWithAI = async (req, res) => {
             return `ID: ${r._id} | Name: ${r.name} | Cuisine: ${r.cuisine?.join(', ')} | Rating: ${r.averageRating}⭐ | Best For: ${uniqueHighlights}`;
         }).join('\n');
 
-        // If user is logged in, fetch last order
+        // If user is logged in, fetch ACTIVE orders (not just last one)
         let orderContext = "";
+        let activeOrdersList = "";
+
+        // Debug Logs to console
+        // Debug Logs to console
+        console.log("AI Context - UserId (Raw):", userId);
+
         if (userId) {
-            const lastOrder = await Order.findOne({ user: userId }).sort({ createdAt: -1 });
-            if (lastOrder) {
-                orderContext = `User's last order was from ${lastOrder.restaurantName} (Status: ${lastOrder.status}).`;
+            let userObjectId;
+            try {
+                userObjectId = new mongoose.Types.ObjectId(userId);
+            } catch (e) {
+                console.error("Invalid User ID format:", userId);
             }
-        }
+
+            if (userObjectId) {
+                // Find orders that are NOT delivered or cancelled
+                const statusRegex = /pending|confirmed|accepted|preparing|ready|out_for_delivery|out for delivery/i;
+
+                const activeOrders = await Order.find({
+                    customer: userObjectId, // Fixed: Schema uses 'customer' and explicit ObjectId
+                    status: { $regex: statusRegex }
+                }).sort({ createdAt: -1 });
+
+                console.log("AI Context - Active Orders Found:", activeOrders.length);
+                if (activeOrders.length > 0) {
+                    console.log("AI Context - First Order Status:", activeOrders[0].status);
+                }
+
+                if (activeOrders.length > 0) {
+                    // We have live orders!
+                    activeOrdersList = activeOrders.map(o =>
+                        `Order ID: ${o._id} | Restaurant: ${o.restaurantName} | Status: ${o.status} | Items: ${o.items.length} items`
+                    ).join('\n');
+
+                    orderContext = `USER HAS ACTIVE ORDERS:\n${activeOrdersList}`;
+                } else {
+                    // Fallback to last historical order for context
+                    const lastOrder = await Order.findOne({ customer: userId }).sort({ createdAt: -1 }); // Fixed: 'customer' field
+                    if (lastOrder) {
+                        orderContext = `User's last completed order was from ${lastOrder.restaurantName} (Status: ${lastOrder.status}).`;
+                    }
+                }
+            }
+        } // Close if(userId)
 
         // 2. Construct System Prompt
         const systemPrompt = `
@@ -70,23 +109,34 @@ export const chatWithAI = async (req, res) => {
         ${orderContext}
 
         YOUR GOAL:
-        Help users find specific dishes or restaurants by navigating them to the search page.
+        Help users find food, TRACK ORDERS, and navigate the site.
 
         RULES & BEHAVIOR:
-        1. **Dish Search**: If user asks for a dish (e.g., "I want pizza", "Any burgers?"), recommend a restaurant but then...
+        1. **Live Order Tracking**: 
+           - **CHECK USER CONTEXT FIRST**: 
+           - IF "USER HAS ACTIVE ORDERS":
+             - Reply: "Your order from [Restaurant Name] is currently **[Status]**."
+             - **MANDATORY**: Add this button: [NAVIGATE:/track-order/ACTUAL_ORDER_ID].
+             - **IMPORTANT**: Replace "ACTUAL_ORDER_ID" with the specific alphanumeric ID (e.g., 64f5...) from the context.
+             - **CRITICAL**: Do NOT use a fake or example ID. Use the REAL ID from the User Context.
+           - IF "USER HAS NO ACTIVE ORDERS":
+             - Reply: "You don't have any active orders right now." 
+             - DO NOT generate a "track-order" link for past orders.
+
+        2. **Dish Search**: If user asks for a dish (e.g., "I want pizza", "Any burgers?"), recommend a restaurant but then...
            - **CRITICAL**: Add a navigation button using this EXACT format: [NAVIGATE:/restaurants?search=KEYWORD].
            - Use the main keyword the user asked for (e.g., "pizza", "burger", "biryani").
            - Example: "Pizza Hut has great options! [NAVIGATE:/restaurants?search=pizza]".
         
-        2. **Restaurant Search**: If user asks for a specific restaurant (e.g., "Take me to Azure"):
+        3. **Restaurant Search**: If user asks for a specific restaurant (e.g., "Take me to Azure"):
            - Example: "Sure, let's go to Azure. [NAVIGATE:/restaurants?search=azure]".
         
-        3. **General Navigation**: 
+        4. **General Navigation**: 
            - "Go to orders" -> [NAVIGATE:/orders]
            - "Go to cart" -> [NAVIGATE:/cart]
            - "Show profile" -> [NAVIGATE:/profile]
         
-        4. **Tone**: Enthusiastic, short, and helpful. Don't dump too much text.
+        5. **Tone**: Enthusiastic, short, and helpful. Don't dump too much text.
         `;
 
         // 3. Call Groq
