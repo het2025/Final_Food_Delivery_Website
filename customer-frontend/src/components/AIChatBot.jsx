@@ -70,20 +70,26 @@ const AIChatBot = () => {
             if (data.success) {
                 // Check for navigation tags like [NAVIGATE:/url]
                 let replyText = data.reply;
-                let navAction = null;
+                let actions = [];
 
-                const navMatch = replyText.match(/\[NAVIGATE:([^\]]+)\]/);
-                if (navMatch) {
-                    navAction = navMatch[1];
-                    replyText = replyText.replace(navMatch[0], '').trim();
+                // Regex to find all [NAVIGATE:...] tags
+                const navRegex = /\[NAVIGATE:([^\]]+)\]/g;
+                let match;
+
+                // Extract all matches
+                while ((match = navRegex.exec(replyText)) !== null) {
+                    actions.push(match[1]); // Add URL/path to actions list
                 }
+
+                // Remove tags from display text
+                replyText = replyText.replace(navRegex, '').trim();
 
                 const aiMessage = {
                     id: Date.now() + 1,
                     text: replyText,
                     sender: 'ai',
                     timestamp: new Date(),
-                    action: navAction
+                    actions: actions // Array of paths
                 };
                 setMessages(prev => [...prev, aiMessage]);
             } else {
@@ -163,15 +169,24 @@ const AIChatBot = () => {
                                         } ${msg.isError ? 'bg-red-50 text-red-600 border-red-100' : ''}`}>
                                         <p className="whitespace-pre-wrap">{msg.text}</p>
 
-                                        {/* Action Button if present */}
-                                        {msg.action && (
-                                            <button
-                                                onClick={() => handleActionClick(msg.action)}
-                                                className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors w-full text-xs font-semibold border border-blue-100"
-                                            >
-                                                <Navigation className="w-3 h-3" />
-                                                Take me there
-                                            </button>
+                                        {/* Action Buttons if present */}
+                                        {msg.actions && msg.actions.length > 0 && (
+                                            <div className="mt-3 space-y-2">
+                                                {msg.actions.map((action, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => handleActionClick(action)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors w-full text-xs font-semibold border border-blue-100 text-left"
+                                                    >
+                                                        <Navigation className="w-3 h-3 flex-shrink-0" />
+                                                        <span className="truncate">
+                                                            {action.includes('track-order') ? 'Track Order' :
+                                                                action.includes('search=') ? `View ${decodeURIComponent(action.split('search=')[1])}` :
+                                                                    'Take me there'}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         )}
 
                                         <span className={`text-[10px] mt-1 block opacity-60 ${msg.sender === 'user' ? 'text-orange-100' : 'text-gray-400'}`}>

@@ -21,35 +21,70 @@ export const chatWithAI = async (req, res) => {
             return res.status(400).json({ success: false, message: "Message is required" });
         }
 
-        // 1. Gather Context - FULL SEARCH
         // Fetch all active restaurants with their popular items/menu highlights
-        const restaurants = await Restaurant.find({
+        let restaurants = await Restaurant.find({
             isActive: true,
-            status: 'approved'
+            status: 'active'
         })
-            .select('name cuisine averageRating address.city menu restaurantId')
+            .select('name cuisine averageRating address.city menu restaurantId priceRange')
             .lean();
 
+        // OPTIMIZATION: Limit to top 30 rated restaurants to prevent Rate Limit (413)
+        // Sort by rating first to get the "best" ones
+        restaurants.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+        let limitedRestaurants = restaurants.slice(0, 30);
+
+        // EXTRA FILTER: Remove "Azure" if present, as per user request
+        limitedRestaurants = limitedRestaurants.filter(r => !r.name.toLowerCase().includes('azure'));
+
+        // SHUFFLE the list to ensure "Surprise Me" doesn't always pick the same one
+        for (let i = limitedRestaurants.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [limitedRestaurants[i], limitedRestaurants[j]] = [limitedRestaurants[j], limitedRestaurants[i]];
+        }
+
         // Format context for AI
-        const contextList = restaurants.map(r => {
-            // Get top 5 popular or main items from menu
-            let highlights = [];
+        const contextList = limitedRestaurants.map(r => {
+            let userHighlights = [];
+            let minPrice = Infinity;
+            let maxPrice = 0;
+
             if (r.menu && r.menu.length > 0) {
                 r.menu.forEach(cat => {
                     if (cat.items) {
                         cat.items.forEach(item => {
-                            if (item.isPopular || highlights.length < 5) {
-                                highlights.push(item.name);
+                            // Track Prices
+                            if (item.price) {
+                                if (item.price < minPrice) minPrice = item.price;
+                                if (item.price > maxPrice) maxPrice = item.price;
+                            }
+                            // Track Highlights
+                            if (item.isPopular || userHighlights.length < 5) {
+                                userHighlights.push(item.name);
                             }
                         });
                     }
                 });
             }
-            const uniqueHighlights = [...new Set(highlights)].slice(0, 8).join(', ');
 
-            // Critical: Use _id for the link if that's what the frontend expects
-            return `ID: ${r._id} | Name: ${r.name} | Cuisine: ${r.cuisine?.join(', ')} | Rating: ${r.averageRating}⭐ | Best For: ${uniqueHighlights}`;
+            // Fallback if no prices found
+            if (minPrice === Infinity) minPrice = "N/A";
+            if (maxPrice === 0) maxPrice = "N/A";
+
+            const priceString = (minPrice !== "N/A") ? `₹${minPrice}-₹${maxPrice}` : r.priceRange || 'N/A';
+            const uniqueHighlights = [...new Set(userHighlights)].slice(0, 4).join(', ');
+
+            // EXPLICIT FORMAT for the AI to read
+            // Handle Missing Rating
+            const ratingDisplay = r.averageRating ? `${r.averageRating}⭐` : "New (No Rating)";
+
+            // EXPLICIT FORMAT for the AI to read
+            return `ID: ${r._id} | Name: ${r.name} | Avg Cost: ${priceString} | Cuisine: ${r.cuisine?.join(', ')} | Rating: ${ratingDisplay} | Top Items: ${uniqueHighlights}`;
         }).join('\n');
+
+        console.log("------------------- AI CONTEXT BEGIN -------------------");
+        console.log(contextList);
+        console.log("------------------- AI CONTEXT END -------------------");
 
         // If user is logged in, fetch ACTIVE orders (not just last one)
         let orderContext = "";
@@ -148,7 +183,18 @@ export const chatWithAI = async (req, res) => {
            - Reply: "Your last meal was [Items] from [Restaurant]. Want to order it again? [NAVIGATE:/restaurants?search=RESTAURANT_NAME]"
            - Example: "Your last meal was Butter Chicken from Punjab Grill. [NAVIGATE:/restaurants?search=Punjab Grill]"
 
-        6. **Tone**: Enthusiastic, short, and helpful. Don't dump too much text.
+        6. **Surprise Me / Random Pick**:
+           - If user asks "Surprise me", "Pick for me", or "What should I eat?":
+           - **ACTION**: The "DATA CONTEXT" list is ALREADY sorted and shuffled for you.
+           - **Logic**: Simply pick the **FIRST** or **SECOND** restaurant from the top of the list.
+           - Reply: "How about **[Name]**? They serve delicious [Cuisine] and have a [Rating] star rating! 🎲"
+           - **MANDATORY**: Add the link: [NAVIGATE:/restaurants?search=Exact_Name]
+           - Example: "How about **Azure**? They have great Italian food! [NAVIGATE:/restaurants?search=Azure]"
+
+        7. **Tone & Privacy**: 
+           - **CRITICAL**: NEVER output the "DATA CONTEXT" or "Let's check..." thoughts to the user. 
+           - Just give the answer directly.
+           - Keep it short and helpful.
         `;
 
         // 3. Call Groq
