@@ -29,10 +29,12 @@ router.post('/categories/fix', checkApproval, fixCategoryLinks);  // ✅ Require
 
 
 
+import { upload } from '../middleware/uploadMiddleware.js';
+
 // ========== ITEMS ==========
 router.get('/items', getMenuItems);  // Read-only, no approval needed
-router.post('/items', checkApproval, createMenuItem);  // ✅ Requires approval
-router.put('/items/:id', checkApproval, updateMenuItem);  // ✅ Requires approval
+router.post('/items', checkApproval, upload.single('image'), createMenuItem);  // ✅ Requires approval
+router.put('/items/:id', checkApproval, upload.single('image'), updateMenuItem);  // ✅ Requires approval
 router.delete('/items/:id', checkApproval, deleteMenuItem);  // ✅ Requires approval
 
 export default router;

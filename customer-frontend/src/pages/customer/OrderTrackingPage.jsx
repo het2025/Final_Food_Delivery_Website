@@ -10,7 +10,8 @@ import {
   Store,
   MapPin,
   Phone,
-  Loader
+  Loader,
+  Home
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Header from '../../components/Header'
@@ -63,11 +64,20 @@ const OrderTrackingPage = () => {
     },
     {
       key: 'OutForDelivery',
+      altKeys: ['Out for Delivery', 'out_for_delivery'], // Handle variations
       label: 'Out for Delivery',
       icon: Truck,
       color: 'from-green-400 to-green-500',
       bgColor: 'bg-green-100',
       textColor: 'text-green-600'
+    },
+    {
+      key: 'Delivered',
+      label: 'Delivered',
+      icon: Home,
+      color: 'from-emerald-500 to-teal-600',
+      bgColor: 'bg-emerald-100',
+      textColor: 'text-emerald-700'
     }
   ]
 
@@ -156,17 +166,23 @@ const OrderTrackingPage = () => {
   // Get current step index
   const getCurrentStepIndex = () => {
     if (!orderData) return 0
-    return statusSteps.findIndex(step => step.key === orderData.status)
+    // Handle status variations (e.g. "Out for Delivery" vs "OutForDelivery")
+    return statusSteps.findIndex(step =>
+      step.key === orderData.status ||
+      (step.altKeys && step.altKeys.includes(orderData.status))
+    )
   }
 
   // Calculate progress percentage
   const getProgressPercentage = () => {
     const currentIndex = getCurrentStepIndex()
+    if (currentIndex === -1) return 0
     return ((currentIndex + 1) / statusSteps.length) * 100
   }
 
   // Get remaining time
   const getRemainingTime = () => {
+    if (orderData?.status === 'Delivered') return 0
     const remaining = estimatedTime - elapsedTime
     return remaining > 0 ? remaining : 0
   }
@@ -205,6 +221,7 @@ const OrderTrackingPage = () => {
   const currentStepIndex = getCurrentStepIndex()
   const progressPercentage = getProgressPercentage()
   const remainingTime = getRemainingTime()
+  const isDelivered = orderData.status === 'Delivered'
   const CurrentIcon = statusSteps[currentStepIndex]?.icon || Package
 
   return (
@@ -240,10 +257,10 @@ const OrderTrackingPage = () => {
               }}
               className="inline-block mb-4"
             >
-              <CurrentIcon className="w-16 h-16 text-orange-500" />
+              <CurrentIcon className={`w-16 h-16 ${isDelivered ? 'text-green-600' : 'text-orange-500'}`} />
             </motion.div>
             <h1 className="mb-2 text-3xl font-bold text-gray-800">
-              Track Your Order
+              {isDelivered ? 'Order Delivered!' : 'Track Your Order'}
             </h1>
             <p className="text-gray-600">
               Order #{orderData.orderNumber || orderData._id?.slice(-8)}
@@ -272,23 +289,33 @@ const OrderTrackingPage = () => {
             </div>
 
             {/* ✅ Time Estimate Card */}
-            <div className="p-6 mb-8 bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl">
+            <div className={`p-6 mb-8 rounded-2xl ${isDelivered ? 'bg-green-50' : 'bg-gradient-to-br from-orange-50 to-red-50'}`}>
               <div className="flex gap-6 justify-center items-center">
                 <div className="text-center">
-                  <Clock className="mx-auto mb-2 w-8 h-8 text-orange-600" />
-                  <p className="text-sm text-gray-600">Estimated Time</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {estimatedTime} min
+                  <Clock className={`mx-auto mb-2 w-8 h-8 ${isDelivered ? 'text-green-600' : 'text-orange-600'}`} />
+                  <p className="text-sm text-gray-600">
+                    {isDelivered ? 'Delivered At' : 'Estimated Time'}
+                  </p>
+                  <p className={`text-2xl font-bold ${isDelivered ? 'text-green-600' : 'text-orange-600'}`}>
+                    {isDelivered
+                      ? new Date(orderData.actualDeliveryTime || orderData.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : `${estimatedTime} min`
+                    }
                   </p>
                 </div>
                 <div className="w-px h-16 bg-gray-300"></div>
                 <div className="text-center">
                   <div className="flex gap-2 justify-center items-center mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-gray-700">Time Remaining</span>
+                    <div className={`w-2 h-2 rounded-full ${isDelivered ? 'bg-green-500' : 'bg-green-500 animate-pulse'}`}></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {isDelivered ? 'Status' : 'Time Remaining'}
+                    </span>
                   </div>
                   <p className="text-2xl font-bold text-green-600">
-                    {remainingTime > 0 ? `${remainingTime} min` : 'Almost there!'}
+                    {isDelivered
+                      ? 'Completed'
+                      : (remainingTime > 0 ? `${remainingTime} min` : 'Arriving Soon!')
+                    }
                   </p>
                 </div>
               </div>
@@ -297,7 +324,7 @@ const OrderTrackingPage = () => {
               <div className="mt-4">
                 <div className="overflow-hidden h-2 bg-gray-200 rounded-full">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-orange-500 to-red-500"
+                    className={`h-full ${isDelivered ? 'bg-green-500' : 'bg-gradient-to-r from-orange-500 to-red-500'}`}
                     initial={{ width: 0 }}
                     animate={{ width: `${progressPercentage}%` }}
                     transition={{ duration: 0.5 }}
@@ -332,8 +359,8 @@ const OrderTrackingPage = () => {
                     {/* Icon Circle */}
                     <motion.div
                       className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all ${isCompleted
-                          ? `bg-gradient-to-br ${step.color} border-transparent shadow-lg`
-                          : 'bg-white border-gray-300'
+                        ? `bg-gradient-to-br ${step.color} border-transparent shadow-lg`
+                        : 'bg-white border-gray-300'
                         }`}
                       animate={isCurrent ? {
                         scale: [1, 1.1, 1],
@@ -361,7 +388,7 @@ const OrderTrackingPage = () => {
                         {step.label}
                       </h3>
 
-                      {isCurrent && (
+                      {isCurrent && !isDelivered && (
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -378,6 +405,13 @@ const OrderTrackingPage = () => {
                         <p className="flex gap-2 items-center text-sm text-green-600">
                           <CheckCircle className="w-4 h-4" />
                           Completed
+                        </p>
+                      )}
+
+                      {isDelivered && isCurrent && (
+                        <p className="flex gap-2 items-center text-sm text-green-600">
+                          <CheckCircle className="w-4 h-4" />
+                          Delivered Successfully
                         </p>
                       )}
 

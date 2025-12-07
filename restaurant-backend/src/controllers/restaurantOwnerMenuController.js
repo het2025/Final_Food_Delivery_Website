@@ -1,5 +1,6 @@
 import { findRestaurantByOwner } from '../models/Restaurant.js';
 import mongoose from 'mongoose';
+import { uploadToCloudinary } from '../utils/cloudinaryHelper.js';
 
 // Helper: Get restaurant for owner
 const getRestaurant = async (restaurantOwnerId) => {
@@ -184,6 +185,18 @@ export const createMenuItem = async (req, res) => {
       preparationTime = 15
     } = req.body;
 
+    // ✅ Upload Image if provided
+    let imageUrl = image;
+    if (req.file) {
+      console.log('📸 Uploading menu item image to Cloudinary...');
+      try {
+        imageUrl = await uploadToCloudinary(req.file.buffer, 'menu_items');
+        console.log('✅ Image uploaded:', imageUrl);
+      } catch (uploadError) {
+        console.error('❌ Image upload failed:', uploadError);
+      }
+    }
+
     console.log('📥 Received menu item data:', { name, category, price, isVeg });
 
     // Validate required fields
@@ -220,8 +233,8 @@ export const createMenuItem = async (req, res) => {
       name: name.trim(),
       description: description?.trim() || '',
       price: parseFloat(price),
-      url: image || '',
-      image: image || '',
+      url: imageUrl || '',
+      image: imageUrl || '',
       isVeg: Boolean(isVeg),
       isPopular: Boolean(isPopular),
       preparationTime: parseInt(preparationTime) || 15
@@ -328,7 +341,21 @@ export const updateMenuItem = async (req, res) => {
     if (updates.price !== undefined) item.price = parseFloat(updates.price);
     if (updates.isAvailable !== undefined) item.isAvailable = Boolean(updates.isAvailable);
     if (updates.isPopular !== undefined) item.isPopular = Boolean(updates.isPopular);
-    if (updates.image !== undefined) item.image = updates.image;
+
+    // Handle image update
+    if (req.file) {
+      console.log('📸 Uploading new menu item image...');
+      try {
+        const imageUrl = await uploadToCloudinary(req.file.buffer, 'menu_items');
+        item.image = imageUrl;
+        item.url = imageUrl; // Update legacy field too if needed
+      } catch (uploadError) {
+        console.error('❌ Image upload failed:', uploadError);
+      }
+    } else if (updates.image !== undefined) {
+      item.image = updates.image;
+    }
+
     if (updates.preparationTime !== undefined) item.preparationTime = parseInt(updates.preparationTime);
 
     await restaurant.save();

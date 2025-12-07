@@ -5,7 +5,8 @@ import {
   getRestaurantOwnerOrderById,
   receiveOrderFromCustomer,
   rejectOrder,
-  acceptOrder
+  acceptOrder,
+  receiveStatusUpdate
 } from '../controllers/restaurantOwnerOrderController.js';
 import { authRestaurantOwner } from '../middleware/restaurantOwnerAuth.js';
 import { checkApproval } from '../middleware/checkApproval.js';  // ✅ NEW: Check approval status
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // ✅ NEW: Public route to receive orders from customer backend (NO AUTH)
 router.post('/receive', receiveOrderFromCustomer);
+router.put('/receive-status-update', receiveStatusUpdate);
 
 // All other routes require restaurant owner auth
 router.use(authRestaurantOwner);

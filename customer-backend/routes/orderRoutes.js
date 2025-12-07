@@ -16,6 +16,9 @@ const router = express.Router();
 // Internal route to get ready orders (for delivery polling)
 router.get('/internal/ready', getReadyOrders);
 
+// Update order status (Internal/Service route)
+router.put('/:id/update-status', updateOrderStatus);
+
 // All following routes require authentication
 router.use(protect);
 

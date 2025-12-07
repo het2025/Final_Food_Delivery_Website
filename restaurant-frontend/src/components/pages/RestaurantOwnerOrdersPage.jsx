@@ -21,9 +21,9 @@ function RestaurantOwnerOrdersPage() {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [newOrderNotification, setNewOrderNotification] = useState(false);
 
-  // ✅ FIXED: Removed 'OutForDelivery' - 'Ready' is now the final status for restaurants
+  // ✅ FIXED: Added 'OutForDelivery' and 'Delivered' for display purposes
   const allowedStatuses = [
-    'Pending', 'Accepted', 'Preparing', 'Ready', 'Cancelled'
+    'Pending', 'Accepted', 'Preparing', 'Ready', 'OutForDelivery', 'Delivered', 'Cancelled'
   ];
 
   // ✅ FIXED: Removed 'OutForDelivery' from timeline
@@ -293,13 +293,19 @@ function RestaurantOwnerOrdersPage() {
                       disabled={
                         updatingOrderId === order.backendId ||
                         order.status === 'Ready' ||
+                        order.status === 'OutForDelivery' ||
+                        order.status === 'Delivered' ||
                         order.status === 'Cancelled'
                       }
                       className={`text-xs md:text-sm font-semibold border rounded-lg px-2 py-1 ${order.status === 'Ready'
-                        ? 'text-green-600 border-green-300 bg-green-50 cursor-not-allowed'
-                        : order.status === 'Cancelled'
-                          ? 'text-red-500 border-red-300 bg-red-50 cursor-not-allowed'
-                          : 'text-yellow-600 border-yellow-300 bg-yellow-50'
+                          ? 'text-green-600 border-green-300 bg-green-50 cursor-not-allowed'
+                          : order.status === 'Delivered'
+                            ? 'text-emerald-700 border-emerald-300 bg-emerald-50 cursor-not-allowed'
+                            : order.status === 'OutForDelivery'
+                              ? 'text-blue-600 border-blue-300 bg-blue-50 cursor-not-allowed'
+                              : order.status === 'Cancelled'
+                                ? 'text-red-500 border-red-300 bg-red-50 cursor-not-allowed'
+                                : 'text-yellow-600 border-yellow-300 bg-yellow-50'
                         }`}
                     >
                       {allowedStatuses.map((status) => (

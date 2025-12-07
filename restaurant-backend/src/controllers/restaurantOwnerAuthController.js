@@ -3,11 +3,22 @@ import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import { RestaurantOwner } from '../models/RestaurantOwner.js';
 import { Restaurant } from '../models/Restaurant.js';
+import { uploadToCloudinary } from '../utils/cloudinaryHelper.js';
 
 // POST /api/auth/register
 export const registerRestaurantOwner = async (req, res) => {
   try {
-    const { name, email, password, phone, restaurant } = req.body;
+    // Parse restaurant data if it comes as a JSON string (FormData limitation)
+    let { name, email, password, phone, restaurant } = req.body;
+
+    if (typeof restaurant === 'string') {
+      try {
+        restaurant = JSON.parse(restaurant);
+      } catch (e) {
+        console.error('Error parsing restaurant JSON:', e);
+        return res.status(400).json({ success: false, message: 'Invalid restaurant data format' });
+      }
+    }
 
     console.log('📥 Registration request received');
     console.log('Owner data:', { name, email, phone });
@@ -90,13 +101,28 @@ export const registerRestaurantOwner = async (req, res) => {
       }
     }
 
+    // ✅ Upload Image if provided
+    let imageUrl = '';
+    if (req.file) {
+      console.log('📸 Uploading image to Cloudinary...');
+      try {
+        imageUrl = await uploadToCloudinary(req.file.buffer, 'restaurants');
+        console.log('✅ Image uploaded:', imageUrl);
+      } catch (uploadError) {
+        console.error('❌ Image upload failed:', uploadError);
+        // Continue without image or return error? Let's continue but warn.
+      }
+    } else if (restaurant.image) {
+      imageUrl = restaurant.image; // Use provided URL if no file
+    }
+
     // ✅ Create Restaurant
     console.log('Creating restaurant...');
     const newRestaurant = await Restaurant.create({
       owner: restaurantOwner._id,
       name: restaurant.name.trim(),
       description: restaurant.description?.trim() || `Welcome to ${restaurant.name}!`,
-      image: restaurant.image?.trim() || '',
+      image: imageUrl, // ✅ Use the uploaded URL
       cuisine: cuisineArray,
       gstNumber: restaurant.gstNumber?.trim() || '',
       deliveryTime: restaurant.deliveryTime?.toString() || '30',

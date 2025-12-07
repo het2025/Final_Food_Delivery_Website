@@ -151,11 +151,15 @@ function RestaurantOwnerMenuManagementPage() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    const { name, value, type, checked, files } = e.target;
+    if (name === 'image' && files && files[0]) {
+      setFormData(prev => ({ ...prev, image: files[0] }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -171,26 +175,30 @@ function RestaurantOwnerMenuManagementPage() {
       // ✅ FIXED: Get category name instead of ID
       const categoryName = categories.find(c => c.id === formData.categoryId)?.name || formData.categoryId;
 
-      const payload = {
-        category: categoryName,  // ✅ Sends "Starters", not "cat_0"
-        name: formData.name,
-        description: formData.description,
-        price: Number(formData.price),
-        image: formData.image,
-        isVeg: formData.isVeg,
-        isPopular: formData.isPopular,
-        isAvailable: true,
-        preparationTime: Number(formData.preparationTime),
-        tags: []
-      };
+      const data = new FormData();
+      data.append('category', categoryName);
+      data.append('name', formData.name);
+      data.append('description', formData.description);
+      data.append('price', formData.price);
+      data.append('isVeg', formData.isVeg);
+      data.append('isPopular', formData.isPopular);
+      data.append('isAvailable', true);
+      data.append('preparationTime', formData.preparationTime);
 
-      console.log('📤 Sending payload:', payload);  // ✅ Added debug log
+      if (formData.image instanceof File) {
+        data.append('image', formData.image);
+      } else if (formData.image && typeof formData.image === 'string') {
+        // If it's a string (existing URL), we can send it or just let backend keep existing
+        data.append('image', formData.image);
+      }
+
+      console.log('📤 Sending payload (FormData)');
 
       let result;
       if (editingItem) {
-        result = await updateMenuItem(editingItem.id, payload);
+        result = await updateMenuItem(editingItem.id, data);
       } else {
-        result = await createMenuItem(payload);
+        result = await createMenuItem(data);
       }
 
       if (!result || !result.success) {
@@ -526,14 +534,13 @@ function RestaurantOwnerMenuManagementPage() {
               {/* Image URL - Full Width */}
               <div className="md:col-span-2">
                 <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Image URL
+                  Item Image
                 </label>
                 <input
-                  type="url"
+                  type="file"
                   name="image"
-                  placeholder="https://example.com/image.jpg"
+                  accept="image/*"
                   className="px-4 py-2 w-full rounded-lg border focus:ring-2 focus:ring-orange-300 disabled:opacity-50"
-                  value={formData.image}
                   onChange={handleInputChange}
                   disabled={saving}
                 />
@@ -571,7 +578,7 @@ function RestaurantOwnerMenuManagementPage() {
             {formData.image && (
               <div className="flex justify-center mt-4">
                 <img
-                  src={formData.image}
+                  src={formData.image instanceof File ? URL.createObjectURL(formData.image) : formData.image}
                   alt="Preview"
                   className="object-cover w-32 h-32 rounded-lg border"
                   onError={(e) => {
@@ -681,8 +688,8 @@ function RestaurantOwnerMenuManagementPage() {
                     <div className="flex gap-2 items-center">
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${item.isVeg
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
                           }`}
                       >
                         {item.isVeg ? 'Veg' : 'Non-Veg'}

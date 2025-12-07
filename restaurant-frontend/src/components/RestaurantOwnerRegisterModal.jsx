@@ -16,19 +16,19 @@ function RestaurantOwnerRegisterModal({ isOpen, onClose }) {
     phone: '',
     password: '',
     confirmPassword: '',
-    
+
     // Restaurant Details
     restaurantName: '',
     description: '',
     cuisine: '',
-    
+
     // Location Details
     area: '',
     address: '',
     city: '',
     state: '',
     pincode: '',
-    
+
     // Additional Details
     deliveryTime: '30',
     priceRange: '₹₹',
@@ -37,8 +37,12 @@ function RestaurantOwnerRegisterModal({ isOpen, onClose }) {
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+    if (name === 'image' && files && files[0]) {
+      setFormData((prev) => ({ ...prev, image: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     setError('');
   };
 
@@ -82,39 +86,47 @@ function RestaurantOwnerRegisterModal({ isOpen, onClose }) {
     try {
       setIsSubmitting(true);
 
-      // ✅ ENHANCED: Send complete restaurant data
-      const response = await registerRestaurantOwner({
-        // Owner info
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        
-        // Restaurant info
-        restaurant: {
-          name: formData.restaurantName,
-          description: formData.description || `Welcome to ${formData.restaurantName}`,
-          cuisine: formData.cuisine ? formData.cuisine.split(',').map(c => c.trim()) : ['Multi-Cuisine'],
-          location: {
-            area: formData.area,
-            address: formData.address,
-            city: formData.city,
-            state: formData.state || 'Gujarat',
-            pincode: formData.pincode,
-            coordinates: [0, 0]
-          },
-          contact: {
-            phone: formData.phone,
-            email: formData.email
-          },
-          deliveryTime: formData.deliveryTime,
-          priceRange: formData.priceRange,
-          image: formData.image || '',
-          gstNumber: formData.gstNumber || '',
-          status: 'active',
-          isActive: true
-        }
-      });
+      // ✅ ENHANCED: Send complete restaurant data via FormData
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('email', formData.email);
+      data.append('phone', formData.phone);
+      data.append('password', formData.password);
+
+      // Construct restaurant object for JSON part
+      const restaurantData = {
+        name: formData.restaurantName,
+        description: formData.description || `Welcome to ${formData.restaurantName}`,
+        cuisine: formData.cuisine ? formData.cuisine.split(',').map(c => c.trim()) : ['Multi-Cuisine'],
+        location: {
+          area: formData.area,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state || 'Gujarat',
+          pincode: formData.pincode,
+          coordinates: [0, 0]
+        },
+        contact: {
+          phone: formData.phone,
+          email: formData.email
+        },
+        deliveryTime: formData.deliveryTime,
+        priceRange: formData.priceRange,
+        // If image is a File, don't put it in JSON (it becomes {}). Send empty string in JSON.
+        // The actual file is sent via formData.append('image', file) below.
+        image: formData.image instanceof File ? '' : (formData.image || ''),
+        gstNumber: formData.gstNumber || '',
+        status: 'active',
+        isActive: true
+      };
+
+      data.append('restaurant', JSON.stringify(restaurantData));
+
+      if (formData.image instanceof File) {
+        data.append('image', formData.image);
+      }
+
+      const response = await registerRestaurantOwner(data);
 
       if (response.success) {
         setSuccess(true);
@@ -345,14 +357,13 @@ function RestaurantOwnerRegisterModal({ isOpen, onClose }) {
                 <div>
                   <label className="flex gap-2 items-center mb-1 text-sm font-medium text-gray-700">
                     <ImageIcon size={16} />
-                    Restaurant Image URL
+                    Restaurant Image
                   </label>
                   <input
-                    type="url"
+                    type="file"
                     name="image"
-                    value={formData.image}
                     onChange={handleChange}
-                    placeholder="https://example.com/restaurant.jpg"
+                    accept="image/*"
                     className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
                 </div>

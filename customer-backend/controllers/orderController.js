@@ -414,6 +414,24 @@ export const updateOrderStatus = async (req, res) => {
       }
     }
 
+    // ✅ NEW: Sync status to Restaurant Backend (e.g. Delivered)
+    if (['Delivered', 'OutForDelivery', 'Out for Delivery'].includes(status)) {
+      try {
+        const RESTAURANT_BACKEND_URL = process.env.RESTAURANT_BACKEND_URL || 'http://localhost:5001';
+
+        console.log(`📡 Syncing status '${status}' to restaurant-backend...`);
+
+        await axios.put(`${RESTAURANT_BACKEND_URL}/api/orders/receive-status-update`, {
+          orderId: order._id.toString(),
+          status: status
+        });
+
+        console.log('✅ Status synced to restaurant-backend');
+      } catch (syncError) {
+        console.error('⚠️ Failed to sync status to restaurant-backend:', syncError.message);
+      }
+    }
+
     res.json({
       success: true,
       data: order,

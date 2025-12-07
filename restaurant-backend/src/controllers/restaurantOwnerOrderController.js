@@ -515,3 +515,83 @@ export const rejectOrder = async (req, res) => {
     });
   }
 };
+
+// ✅ NEW: Receive status update from Customer Backend (e.g. Delivered)
+export const receiveStatusUpdate = async (req, res) => {
+  try {
+    const { orderId, status } = req.body;
+
+    console.log(`🔔 Received status update for order ${orderId}: ${status}`);
+
+    if (!orderId || !status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing orderId or status'
+      });
+    }
+
+    // Normalize status
+    let normalizedStatus = status;
+    if (status.toLowerCase() === 'outfordelivery' || status.toLowerCase() === 'out-for-delivery') {
+      normalizedStatus = 'OutForDelivery';
+    } else {
+      normalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    }
+
+    const db = mongoose.connection.db;
+    const ordersCollection = db.collection('orders');
+
+    // Find order by originalOrderId (from customer backend) OR _id
+    const order = await ordersCollection.findOne({
+      $or: [
+        { originalOrderId: orderId },
+        { _id: new mongoose.Types.ObjectId(orderId) }
+      ]
+    });
+
+    if (!order) {
+      console.error('❌ Order not found for status update:', orderId);
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Update status
+    await ordersCollection.updateOne(
+      { _id: order._id },
+      {
+        $set: {
+          status: normalizedStatus,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log('✅ Restaurant Order status updated to:', normalizedStatus);
+
+    // Socket.io notification
+    if (req.io) {
+      const roomName = `restaurant_${order.restaurant}`;
+      console.log(`📡 Emitting 'order_status_updated' to room: ${roomName}`);
+      req.io.to(roomName).emit('order_status_updated', {
+        orderId: order._id,
+        status: normalizedStatus,
+        originalOrderId: orderId
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Status updated successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ receiveStatusUpdate error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update status',
+      error: error.message
+    });
+  }
+};

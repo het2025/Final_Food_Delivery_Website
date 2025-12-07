@@ -34,7 +34,7 @@ const handleResponse = async (res) => {
       logoutRestaurantOwner();
     }
     const errorMsg = json.message || `HTTP ${res.status}`;
-    
+
     // Graceful handling for no-restaurant scenarios
     if (res.status === 400 && json.message?.includes('No restaurant')) {
       return json;
@@ -77,12 +77,13 @@ export const loginRestaurantOwner = async ({ email, password }) => {
 // POST /api/auth/register
 export const registerRestaurantOwner = async (data) => {
   try {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
+
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
+      headers: headers,
+      body: isFormData ? data : JSON.stringify(data)
     });
 
     const result = await response.json();
@@ -267,7 +268,7 @@ export const getMenuCategories = async () => {
 
     const data = await res.json();
     console.log('🔵 API getMenuCategories raw response:', data);
-    
+
     return data;
   } catch (error) {
     console.error('❌ API getMenuCategories error:', error);
@@ -303,26 +304,36 @@ export const getMenuItems = async (categoryId) => {
 
 // POST /api/menu/items
 export const createMenuItem = async (payload) => {
+  const isFormData = payload instanceof FormData;
+  const headers = {
+    ...getAuthHeaders()
+  };
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(`${API_BASE_URL}/menu/items`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders()
-    },
-    body: JSON.stringify(payload)
+    headers: headers,
+    body: isFormData ? payload : JSON.stringify(payload)
   });
   return handleResponse(res);
 };
 
 // PUT /api/menu/items/:id
 export const updateMenuItem = async (itemId, payload) => {
+  const isFormData = payload instanceof FormData;
+  const headers = {
+    ...getAuthHeaders()
+  };
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(`${API_BASE_URL}/menu/items/${itemId}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders()
-    },
-    body: JSON.stringify(payload)
+    headers: headers,
+    body: isFormData ? payload : JSON.stringify(payload)
   });
   return handleResponse(res);
 };
@@ -332,7 +343,7 @@ export const updateMenuItem = async (itemId, payload) => {
    EXPORTS SUMMARY
    ======================================== */
 
-// Auth: loginRestaurantOwner, registerRestaurantOwner, getCurrentRestaurantOwner, 
+// Auth: loginRestaurantOwner, registerRestaurantOwner, getCurrentRestaurantOwner,
 //       logoutRestaurantOwner, updateRestaurantOwnerProfile, updateRestaurantOwnerPassword
 // Orders: getRestaurantOwnerOrders, getRestaurantOwnerOrderById, updateRestaurantOwnerOrderStatus
 // Dashboard: getDashboardStats

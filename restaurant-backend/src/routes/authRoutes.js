@@ -8,10 +8,12 @@ import {
 } from '../controllers/restaurantOwnerAuthController.js';  // Ensure controller exists
 import { authRestaurantOwner } from '../middleware/restaurantOwnerAuth.js';  // Middleware verifies JWT, sets req.user
 
+import { upload } from '../middleware/uploadMiddleware.js';
+
 const router = express.Router();
 
 // Public routes (no auth)
-router.post('/register', registerRestaurantOwner);  // Creates RestaurantOwner, auto-logs in
+router.post('/register', upload.single('image'), registerRestaurantOwner);  // Creates RestaurantOwner, auto-logs in
 router.post('/login', loginRestaurantOwner);  // Validates creds, returns token
 
 // Protected routes (require valid token)
