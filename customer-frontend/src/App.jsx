@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 // Components
 import Loading from './components/Loading';
 import ProtectedRoute from './components/ProtectedRoute';
+import AIChatBot from './components/AIChatBot';
 
 // Context Providers
 import { CartProvider } from './context/CartContext';
@@ -27,6 +28,7 @@ import CustomerProfilePage from './pages/customer/ProfilePage';
 import CustomerSettings from './pages/customer/Settings';
 import Rewards from './pages/customer/Rewards';
 import CustomerOrders from './pages/customer/Orders';
+import OrderDetails from './pages/customer/OrderDetails';
 import CustomerAddresses from './pages/customer/Addresses';
 import CustomerHelp from './pages/customer/Help';
 import CustomerRefundPolicy from './pages/customer/RefundPolicy';
@@ -73,173 +75,188 @@ const AppContent = () => {
   if (userLoading) return <Loading />;
 
   return (
-    <Routes>
-      {/* Public Main Landing Page */}
-      <Route
-        path="/"
-        element={
-          user
-            ? <Navigate to="/home" replace />
-            : <MainHomePage />
-        }
-      />
 
-      {/* Unified Login/Signup Page */}
-      <Route
-        path="/login"
-        element={
-          user
-            ? <Navigate to="/home" replace />
-            : <LoginSignup />
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          user
-            ? <Navigate to="/home" replace />
-            : <LoginSignup />
-        }
-      />
+    <>
+      <Routes>
+        {/* Public Main Landing Page */}
+        <Route
+          path="/"
+          element={
+            user
+              ? <Navigate to="/home" replace />
+              : <MainHomePage />
+          }
+        />
 
-      {/* Protected Routes - Require authentication */}
-      <Route
-        path="/home"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/restaurants"
-        element={
-          <ProtectedRoute>
-            <Restaurants />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/newly-registered"
-        element={
-          <ProtectedRoute>
-            <NewlyRegistered />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/menu/:vendorId"
-        element={
-          <ProtectedRoute>
-            <Menu />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/search"
-        element={
-          <ProtectedRoute>
-            <SearchPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/cart"
-        element={
-          <ProtectedRoute>
-            <Cart />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/payment"
-        element={
-          <ProtectedRoute>
-            <Payment />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/order-success"
-        element={
-          <ProtectedRoute>
-            <OrderSuccess />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <CustomerProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/orders"
-        element={
-          <ProtectedRoute>
-            <CustomerOrders />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/addresses"
-        element={
-          <ProtectedRoute>
-            <CustomerAddresses />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <CustomerSettings />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/rewards"
-        element={
-          <ProtectedRoute>
-            <Rewards />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/order-success"
-        element={
-          <ProtectedRoute>
-            <OrderSuccess />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/track-order/:orderId"
-        element={
-          <ProtectedRoute>
-            <OrderTrackingPage />
-          </ProtectedRoute>
-        }
-      />
+        {/* Unified Login/Signup Page */}
+        <Route
+          path="/login"
+          element={
+            user
+              ? <Navigate to="/home" replace />
+              : <LoginSignup />
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            user
+              ? <Navigate to="/home" replace />
+              : <LoginSignup />
+          }
+        />
+
+        {/* Protected Routes - Require authentication */}
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/restaurants"
+          element={
+            <ProtectedRoute>
+              <Restaurants />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/newly-registered"
+          element={
+            <ProtectedRoute>
+              <NewlyRegistered />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/menu/:vendorId"
+          element={
+            <ProtectedRoute>
+              <Menu />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <SearchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment"
+          element={
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order-success"
+          element={
+            <ProtectedRoute>
+              <OrderSuccess />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <CustomerProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <CustomerOrders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/addresses"
+          element={
+            <ProtectedRoute>
+              <CustomerAddresses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <CustomerSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rewards"
+          element={
+            <ProtectedRoute>
+              <Rewards />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order-success"
+          element={
+            <ProtectedRoute>
+              <OrderSuccess />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/track-order/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderTrackingPage />
+            </ProtectedRoute>
+          }
+        />
 
 
 
-      {/* Public Info Pages */}
-      <Route path="/help" element={<CustomerHelp />} />
-      <Route path="/refund-policy" element={<CustomerRefundPolicy />} />
-      <Route path="/terms" element={<CustomerTerms />} />
-      <Route path="/privacy" element={<CustomerPrivacy />} />
+        {/* Public Info Pages */}
+        <Route path="/help" element={<CustomerHelp />} />
+        <Route path="/refund-policy" element={<CustomerRefundPolicy />} />
+        <Route path="/terms" element={<CustomerTerms />} />
+        <Route path="/privacy" element={<CustomerPrivacy />} />
 
-      {/* Error Pages */}
-      <Route path="/404" element={<Error404 />} />
-      <Route path="/500" element={<Error500 />} />
+        {/* Error Pages */}
+        <Route path="/404" element={<Error404 />} />
+        <Route path="/500" element={<Error500 />} />
 
-      {/* Catch All */}
-      <Route path="*" element={<Error404 />} />
-    </Routes>
+        {/* Catch All */}
+        <Route path="*" element={<Error404 />} />
+      </Routes>
+
+      {/* AI Chatbot Widget - Available on all pages */}
+      <AIChatBot />
+    </>
   );
+
 };
 
 export default App;

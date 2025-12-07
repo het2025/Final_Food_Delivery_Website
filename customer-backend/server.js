@@ -19,6 +19,7 @@ import authRoutes from './routes/auth.js';
 import restaurantRoutes from './routes/restaurants.js';
 import userRoutes from './routes/users.js';
 import addressRoutes from './routes/addresses.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
 
@@ -106,6 +107,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/geocode', geocodeRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Debug log for geocode routes
 console.log('📍 Geocode routes registered at /api/geocode');
