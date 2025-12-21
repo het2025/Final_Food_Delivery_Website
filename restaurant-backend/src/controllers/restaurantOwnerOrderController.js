@@ -335,6 +335,7 @@ export const receiveOrderFromCustomer = async (req, res) => {
 
     console.log('🔔 Received order from customer backend:', orderNumber);
     console.log('📍 Restaurant ID:', restaurantId);
+    console.log('💰 Received Price Data:', { subtotal, discount: 'N/A', total, deliveryFee });
 
     // Validation
     if (!restaurantId || !orderNumber || !items) {
@@ -373,6 +374,11 @@ export const receiveOrderFromCustomer = async (req, res) => {
       deliveryAddress: deliveryAddress,
       deliveryFee: deliveryFee || 0,
       deliveryDistance: 0, // Default as not sent by customer-backend yet
+
+      // ✅ NEW: Save explicit subtotal and taxes
+      subtotal: subtotal || 0,
+      taxes: taxes || 0,
+
       notes: instructions || '',
       customerName: customerName || 'Customer', // ✅ Default to 'Customer' if missing
       customerPhone: customerPhone || ''

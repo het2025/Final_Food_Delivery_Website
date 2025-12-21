@@ -28,16 +28,20 @@ const orderSchema = new mongoose.Schema(
       default: 'pending'
     },
     // ✅ CHANGED: Store full address object for delivery backend
-    deliveryAddress: { type: Object }, 
+    deliveryAddress: { type: Object },
     deliveryFee: { type: Number, default: 0 },
     deliveryDistance: { type: Number, default: 0 },
-    
+
+    // ✅ NEW: Explicit price breakdown for restaurant display
+    subtotal: { type: Number, default: 0 }, // Dish Price
+    taxes: { type: Number, default: 0 },    // Taxes
+
     notes: { type: String },
-    
+
     // ✅ NEW: Customer information
     customerName: { type: String },
     customerPhone: { type: String },
-    
+
     // ✅ NEW: Store original order ID from customer-backend
     originalOrderId: { type: String }
   },

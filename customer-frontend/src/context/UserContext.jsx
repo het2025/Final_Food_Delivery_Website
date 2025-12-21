@@ -44,7 +44,7 @@ export const UserProvider = ({ children }) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', token);
-    
+
     // Fetch addresses after login
     try {
       const response = await addressService.getAddresses();
@@ -66,8 +66,8 @@ export const UserProvider = ({ children }) => {
     console.log('User logged out successfully');
   }, [setUser, setAddresses]); // Dependencies for useCallback
 
-  const fetchUserProfile = useCallback(async () => {
-    setLoading(true);
+  const fetchUserProfile = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (token) {
@@ -87,7 +87,7 @@ export const UserProvider = ({ children }) => {
       console.error('Error fetching user profile:', error);
       logoutUser(); // Log out on error
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [setUser, setAddresses, setLoading, logoutUser]);
 
@@ -137,11 +137,11 @@ export const UserProvider = ({ children }) => {
   };
 
   const contextValue = React.useMemo(() => ({
-    user, 
+    user,
     loading,
-    setUser, 
-    loginUser, 
-    logoutUser, 
+    setUser,
+    loginUser,
+    logoutUser,
     updateUser,
     addresses,
     addAddress,
@@ -149,7 +149,7 @@ export const UserProvider = ({ children }) => {
     deleteAddress,
     refreshUser: fetchUserProfile
   }), [
-    user, 
+    user,
     loading,
     addresses,
     fetchUserProfile,

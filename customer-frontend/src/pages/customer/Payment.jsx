@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  ArrowLeft, 
-  CreditCard, 
-  Smartphone, 
-  Wallet, 
+import {
+  ArrowLeft,
+  CreditCard,
+  Smartphone,
+  Wallet,
   DollarSign,
   CheckCircle,
   Loader
@@ -21,7 +21,7 @@ const Payment = () => {
   const location = useLocation()
   const { cartItems, clearCart } = useCart()
   const { addresses = [] } = useUser()
-  
+
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('online')
   const [processing, setProcessing] = useState(false)
   const [selectedAddress, setSelectedAddress] = useState(null)
@@ -30,11 +30,11 @@ const Payment = () => {
   const [deliveryCheckStep, setDeliveryCheckStep] = useState('checking')
 
   // Get order details from location state (passed from Cart)
-  const { 
-    subtotal = 0, 
-    taxes = 0, 
-    deliveryFee = 0, 
-    total = 0, 
+  const {
+    subtotal = 0,
+    taxes = 0,
+    deliveryFee = 0,
+    total = 0,
     discountAmount = 0,
     deliveryDistance = 0,
     deliveryTime = 0,
@@ -46,7 +46,7 @@ const Payment = () => {
     if (!cartItems || cartItems.length === 0 || !location.state) {
       navigate('/cart')
     }
-    
+
     // Set address from cart or use default
     if (passedAddress) {
       setSelectedAddress(passedAddress)
@@ -94,11 +94,11 @@ const Payment = () => {
 
     setTimeout(async () => {
       setDeliveryCheckStep('available');
-      
+
       setTimeout(async () => {
         try {
           const token = localStorage.getItem('token');
-          
+
           if (!token) {
             alert('Please login to continue');
             navigate('/login');
@@ -111,7 +111,7 @@ const Payment = () => {
           const orderData = {
             items: cartItems.map(item => {
               console.log('Processing item:', item);
-              
+
               // ✅ Convert customization to string or empty string
               let customizationStr = '';
               if (item.customization) {
@@ -123,7 +123,7 @@ const Payment = () => {
                   customizationStr = String(item.customization);
                 }
               }
-              
+
               return {
                 menuItem: item._id || item.id || null,
                 name: item.name || 'Unknown Item',
@@ -133,15 +133,15 @@ const Payment = () => {
                 customization: customizationStr // ✅ Always STRING
               };
             }),
-            restaurantName: cartItems[0]?.restaurantName || 
-                            cartItems[0]?.restaurant?.name || 
-                            'Restaurant',
-            restaurantImage: cartItems[0]?.restaurantImage || 
-                             cartItems[0]?.restaurant?.image || 
-                             '/placeholder.jpg',
-            restaurant: cartItems[0]?.restaurantId || 
-                        cartItems[0]?.restaurant?._id || 
-                        null,
+            restaurantName: cartItems[0]?.restaurantName ||
+              cartItems[0]?.restaurant?.name ||
+              'Restaurant',
+            restaurantImage: cartItems[0]?.restaurantImage ||
+              cartItems[0]?.restaurant?.image ||
+              '/placeholder.jpg',
+            restaurant: cartItems[0]?.restaurantId ||
+              cartItems[0]?.restaurant?._id ||
+              null,
             deliveryAddress: {
               street: selectedAddress.street || '',
               city: selectedAddress.city || '',
@@ -161,6 +161,12 @@ const Payment = () => {
             deliveryDuration: Number(deliveryTime) || 30,
             instructions: ''
           };
+
+          console.log('🐞 Payload Debug:', {
+            subtotal: orderData.subtotal,
+            discount: orderData.discount,
+            total: orderData.total
+          });
 
           console.log('Sending order data:', orderData);
 
@@ -218,7 +224,7 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="pt-20 pb-8">
         <div className="px-4 mx-auto max-w-4xl sm:px-6 lg:px-8">
           <button
@@ -244,7 +250,7 @@ const Payment = () => {
             <div className="lg:col-span-2">
               <div className="p-6 mb-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <h2 className="mb-6 text-xl font-semibold text-gray-800">Select Payment Method</h2>
-                
+
                 <div className="space-y-4">
                   {paymentMethods.map((method) => (
                     <motion.div
@@ -252,21 +258,19 @@ const Payment = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedPaymentMethod(method.id)}
-                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                        selectedPaymentMethod === method.id
+                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedPaymentMethod === method.id
                           ? 'border-orange-500 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <div className="flex gap-4 items-start">
-                        <div className={`p-3 rounded-lg ${
-                          selectedPaymentMethod === method.id
+                        <div className={`p-3 rounded-lg ${selectedPaymentMethod === method.id
                             ? 'bg-orange-500 text-white'
                             : 'bg-gray-100 text-gray-600'
-                        }`}>
+                          }`}>
                           <method.icon className="w-6 h-6" />
                         </div>
-                        
+
                         <div className="flex-1">
                           <div className="flex gap-2 items-center">
                             <h3 className="font-semibold text-gray-800">{method.name}</h3>
@@ -332,46 +336,46 @@ const Payment = () => {
                 className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm"
               >
                 <h3 className="mb-4 text-lg font-semibold text-gray-800">Order Summary</h3>
-                
+
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Items ({cartItems.length})</span>
                     <span className="font-semibold">₹{subtotal}</span>
                   </div>
-                  
+
                   <div className="flex justify-between">
                     <span className="text-gray-600">Taxes & Fees</span>
                     <span className="font-semibold">₹{taxes}</span>
                   </div>
-                  
+
                   <div className="flex justify-between">
                     <span className="text-gray-600">Delivery Fee</span>
                     <span className="font-semibold">
                       {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
                     </span>
                   </div>
-                  
+
                   {deliveryDistance > 0 && (
                     <div className="text-xs text-gray-500">
                       Distance: {deliveryDistance} km • Time: {deliveryTime} mins
                     </div>
                   )}
-                  
+
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Discount</span>
                       <span className="font-semibold">-₹{discountAmount}</span>
                     </div>
                   )}
-                  
+
                   <hr className="border-gray-200" />
-                  
+
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
                     <span>₹{Math.round(total)}</span>
                   </div>
                 </div>
-                
+
                 <button
                   onClick={handlePayment}
                   disabled={processing || !selectedAddress}

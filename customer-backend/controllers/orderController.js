@@ -103,13 +103,8 @@ export const createOrder = async (req, res) => {
     await order.save();
     console.log('✅ Order created successfully:', order._id);
 
-    // Increment completedOrdersCount for the user (new definition of 'completed')
-    const user = await User.findById(customerId);
-    if (user) {
-      user.completedOrdersCount = (user.completedOrdersCount || 0) + 1;
-      await user.save();
-      console.log(`User ${user._id} completed orders count incremented to ${user.completedOrdersCount} after order creation.`);
-    }
+    // Increment logic removed: We should only count completed (delivered) orders.
+    // This is now handled in updateOrderStatus when status becomes 'Delivered'.
 
     // Send order to Restaurant Backend
     const RESTAURANT_BACKEND_URL = process.env.RESTAURANT_BACKEND_URL || 'http://localhost:5001';
@@ -122,15 +117,26 @@ export const createOrder = async (req, res) => {
         customerName: req.user.name || 'Customer',
         customerPhone: req.user.phone || '',
         restaurantId: restaurant,
-        items: items,
+        items: items.map(item => ({
+          ...item,
+          menuItem: item.menuItem && typeof item.menuItem === 'string'
+            ? item.menuItem.split('-')[0] // Remove any frontend-generated suffixes (e.g., "-randomId")
+            : item.menuItem
+        })),
         deliveryAddress: deliveryAddress,
         subtotal: subtotal,
         deliveryFee: deliveryFee,
         taxes: taxes,
-        total: total,
+        total: Number(total) + Number(discount || 0), // Send full amount (including discount) to restaurant
         paymentMethod: paymentMethod,
         instructions: instructions,
         orderTime: new Date()
+      });
+
+      console.log('💰 Price Debug:', {
+        customerTotal: total,
+        discount: discount,
+        sentToRestaurant: Number(total) + Number(discount || 0)
       });
 
       console.log('✅ Order notification sent to restaurant backend');
@@ -429,6 +435,20 @@ export const updateOrderStatus = async (req, res) => {
         console.log('✅ Status synced to restaurant-backend');
       } catch (syncError) {
         console.error('⚠️ Failed to sync status to restaurant-backend:', syncError.message);
+      }
+    }
+
+    // ✅ NEW: Increment user's completedOrdersCount when order is Delivered
+    if (status === 'Delivered' && oldOrder && oldOrder.status !== 'Delivered') {
+      try {
+        const user = await User.findById(order.customer);
+        if (user) {
+          user.completedOrdersCount = (user.completedOrdersCount || 0) + 1;
+          await user.save();
+          console.log(`🎉 User ${user._id} completed orders count incremented to ${user.completedOrdersCount}`);
+        }
+      } catch (userError) {
+        console.error('⚠️ Failed to increment user completedOrdersCount:', userError.message);
       }
     }
 

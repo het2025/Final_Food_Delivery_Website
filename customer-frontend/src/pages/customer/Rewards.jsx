@@ -14,11 +14,13 @@ const dynamicRewardsTiers = [
 ];
 
 const Rewards = () => {
-  const { user } = useUser();
+  const { user, refreshUser } = useUser();
   const completedOrdersCount = user?.completedOrdersCount || 0;
   const [copiedCode, setCopiedCode] = useState(null);
 
-  // useEffect removed to prevent infinite refresh loop as per user request
+  useEffect(() => {
+    refreshUser(true); // Silent refresh to avoid global loading flicker/unmount
+  }, []); // Refresh user data on mount to get latest order count
 
 
   const handleCopy = (code) => {

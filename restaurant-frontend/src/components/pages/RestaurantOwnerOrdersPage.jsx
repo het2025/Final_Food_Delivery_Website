@@ -62,10 +62,16 @@ function RestaurantOwnerOrdersPage() {
     if (created) {
       time = new Date(created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-    // YOUR ACTUAL REVENUE = subtotal minus delivery charge:
-    const deliveryCharge = 30;
-    const rawTotal = Number(order.totalAmount) || Number(order.total) || Number(order.finalAmount) || Number(order.amount) || 0;
-    const netAmount = Math.max(rawTotal - deliveryCharge, 0);
+    // YOUR ACTUAL REVENUE = Dish Price + Taxes
+    // If backend provides explicit breakdown, use it. Otherwise fallback to Total - Delivery.
+    let netAmount;
+    if (order.subtotal !== undefined && order.taxes !== undefined) {
+      netAmount = Number(order.subtotal) + Number(order.taxes);
+    } else {
+      const deliveryCharge = order.deliveryFee !== undefined ? Number(order.deliveryFee) : 30;
+      const rawTotal = Number(order.totalAmount) || Number(order.total) || 0;
+      netAmount = Math.max(rawTotal - deliveryCharge, 0);
+    }
 
     return {
       backendId: order._id?.toString() || '',
@@ -298,14 +304,14 @@ function RestaurantOwnerOrdersPage() {
                         order.status === 'Cancelled'
                       }
                       className={`text-xs md:text-sm font-semibold border rounded-lg px-2 py-1 ${order.status === 'Ready'
-                          ? 'text-green-600 border-green-300 bg-green-50 cursor-not-allowed'
-                          : order.status === 'Delivered'
-                            ? 'text-emerald-700 border-emerald-300 bg-emerald-50 cursor-not-allowed'
-                            : order.status === 'OutForDelivery'
-                              ? 'text-blue-600 border-blue-300 bg-blue-50 cursor-not-allowed'
-                              : order.status === 'Cancelled'
-                                ? 'text-red-500 border-red-300 bg-red-50 cursor-not-allowed'
-                                : 'text-yellow-600 border-yellow-300 bg-yellow-50'
+                        ? 'text-green-600 border-green-300 bg-green-50 cursor-not-allowed'
+                        : order.status === 'Delivered'
+                          ? 'text-emerald-700 border-emerald-300 bg-emerald-50 cursor-not-allowed'
+                          : order.status === 'OutForDelivery'
+                            ? 'text-blue-600 border-blue-300 bg-blue-50 cursor-not-allowed'
+                            : order.status === 'Cancelled'
+                              ? 'text-red-500 border-red-300 bg-red-50 cursor-not-allowed'
+                              : 'text-yellow-600 border-yellow-300 bg-yellow-50'
                         }`}
                     >
                       {allowedStatuses.map((status) => (
