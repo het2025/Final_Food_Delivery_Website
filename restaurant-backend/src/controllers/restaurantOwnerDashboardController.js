@@ -157,18 +157,29 @@ export const getPayoutStats = async (req, res) => {
 
     console.log('💰 Stats calculated:', stats);
 
-    // Calculate total already paid out
+    // Calculate total already paid out (including breakdown)
     const payoutResult = await Payout.aggregate([
       { $match: { restaurantId: restaurantId, status: 'Completed' } },
-      { $group: { _id: null, totalPaid: { $sum: '$amount' } } }
+      {
+        $group: {
+          _id: null,
+          totalPaid: { $sum: '$amount' },
+          paidDishPrice: { $sum: { $ifNull: ['$breakdown.dishPrice', 0] } },
+          paidTaxes: { $sum: { $ifNull: ['$breakdown.taxes', 0] } }
+        }
+      }
     ]);
 
     const totalPaid = payoutResult[0]?.totalPaid || 0;
+    const paidDishPrice = payoutResult[0]?.paidDishPrice || 0;
+    const paidTaxes = payoutResult[0]?.paidTaxes || 0;
 
     console.log('💵 Total already paid:', totalPaid);
 
     // Pending payout = Total revenue - Total paid
     const pendingPayout = stats.totalRevenue - totalPaid;
+    const pendingDishPrice = stats.totalDishPrice - paidDishPrice;
+    const pendingTaxes = stats.totalTaxes - paidTaxes;
 
     console.log('✅ Pending payout:', pendingPayout);
 
@@ -179,8 +190,8 @@ export const getPayoutStats = async (req, res) => {
         totalPaid: totalPaid,
         pendingPayout: Math.max(0, pendingPayout), // Ensure non-negative
         breakdown: {
-          dishPrice: stats.totalDishPrice,
-          taxes: stats.totalTaxes
+          dishPrice: Math.max(0, pendingDishPrice),
+          taxes: Math.max(0, pendingTaxes)
         }
       }
     });

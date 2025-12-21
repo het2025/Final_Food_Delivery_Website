@@ -178,12 +178,8 @@ const PayoutsPage = () => {
                                         <span className="font-semibold">₹{stats.breakdown.taxes.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between font-bold text-black border-t pt-2">
-                                        <span>Total Revenue:</span>
-                                        <span>₹{stats.totalRevenue.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between text-red-600">
-                                        <span>Already Collected:</span>
-                                        <span>- ₹{(stats.totalPaid || 0).toLocaleString()}</span>
+                                        <span>Total:</span>
+                                        <span>₹{(stats.breakdown.dishPrice + stats.breakdown.taxes).toLocaleString()}</span>
                                     </div>
                                 </div>
 
@@ -192,8 +188,8 @@ const PayoutsPage = () => {
                                     onClick={handleCollectPayout}
                                     disabled={!stats.pendingPayout || stats.pendingPayout <= 0}
                                     className={`mt-6 w-full py-3 rounded-lg font-semibold text-white transition ${stats.pendingPayout > 0
-                                            ? 'bg-green-600 hover:bg-green-700'
-                                            : 'bg-gray-300 cursor-not-allowed'
+                                        ? 'bg-green-600 hover:bg-green-700'
+                                        : 'bg-gray-300 cursor-not-allowed'
                                         }`}
                                 >
                                     {stats.pendingPayout > 0 ? 'Collect Payout' : 'No Pending Payout'}
