@@ -45,14 +45,20 @@ export const chatWithAI = async (req, res) => {
 
         // Format context for AI
         const contextList = limitedRestaurants.map(r => {
+            let vegCount = 0;
+            let totalItems = 0;
             let userHighlights = [];
             let minPrice = Infinity;
             let maxPrice = 0;
+
 
             if (r.menu && r.menu.length > 0) {
                 r.menu.forEach(cat => {
                     if (cat.items) {
                         cat.items.forEach(item => {
+                            totalItems++;
+                            if (item.isVeg) vegCount++;
+
                             // Track Prices
                             if (item.price) {
                                 if (item.price < minPrice) minPrice = item.price;
@@ -74,12 +80,16 @@ export const chatWithAI = async (req, res) => {
             const priceString = (minPrice !== "N/A") ? `₹${minPrice}-₹${maxPrice}` : r.priceRange || 'N/A';
             const uniqueHighlights = [...new Set(userHighlights)].slice(0, 4).join(', ');
 
+            // Dietary Info
+            const isPureVeg = totalItems > 0 && vegCount === totalItems;
+            const dietaryLabel = isPureVeg ? "Pure Veg" : (vegCount > 0 ? "Mixed / Veg Options" : "Non-Veg Only");
+
             // EXPLICIT FORMAT for the AI to read
             // Handle Missing Rating
             const ratingDisplay = r.averageRating ? `${r.averageRating}⭐` : "New (No Rating)";
 
             // EXPLICIT FORMAT for the AI to read
-            return `ID: ${r._id} | Name: ${r.name} | Avg Cost: ${priceString} | Cuisine: ${r.cuisine?.join(', ')} | Rating: ${ratingDisplay} | Top Items: ${uniqueHighlights}`;
+            return `ID: ${r._id} | Name: ${r.name} | Avg Cost: ${priceString} | Cuisine: ${r.cuisine?.join(', ')} | Dietary: ${dietaryLabel} | Rating: ${ratingDisplay} | Top Items: ${uniqueHighlights}`;
         }).join('\n');
 
         console.log("------------------- AI CONTEXT BEGIN -------------------");
@@ -104,7 +114,7 @@ export const chatWithAI = async (req, res) => {
 
             if (userObjectId) {
                 // Find orders that are NOT delivered or cancelled
-                const statusRegex = /pending|confirmed|accepted|preparing|ready|out_for_delivery|out for delivery/i;
+                const statusRegex = /pending|confirmed|accepted|preparing|ready|out_for_delivery|out for delivery|outfordelivery|picked up/i;
 
                 const activeOrders = await Order.find({
                     customer: userObjectId, // Fixed: Schema uses 'customer' and explicit ObjectId
@@ -189,9 +199,17 @@ export const chatWithAI = async (req, res) => {
            - **Logic**: Simply pick the **FIRST** or **SECOND** restaurant from the top of the list.
            - Reply: "How about **[Name]**? They serve delicious [Cuisine] and have a [Rating] star rating! 🎲"
            - **MANDATORY**: Add the link: [NAVIGATE:/restaurants?search=Exact_Name]
-           - Example: "How about **Azure**? They have great Italian food! [NAVIGATE:/restaurants?search=Azure]"
+            - Example: "How about **Azure**? They have great Italian food! [NAVIGATE:/restaurants?search=Azure]"
 
-        7. **Tone & Privacy**: 
+         8. **Dietary Helper (Veg/Non-Veg)**:
+            - If user asks "Is this veg?" or "Show me veg options":
+            - Check the "Dietary" field in the context.
+            - If user wants STRICT veg, suggest "Pure Veg" restaurants.
+            - Action: Suggest searching for "pure veg" -> [NAVIGATE:/restaurants?search=Pure Veg]
+            - Example: "Pizza Hut has many veg options. [NAVIGATE:/restaurants?search=Pizza Hut]"
+            - Example: "For strict vegetarian food, check out these places. [NAVIGATE:/restaurants?search=Pure Veg]"
+
+        9. **Tone & Privacy**: 
            - **CRITICAL**: NEVER output the "DATA CONTEXT" or "Let's check..." thoughts to the user. 
            - Just give the answer directly.
            - Keep it short and helpful.

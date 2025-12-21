@@ -1,0 +1,117 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Admin Backend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "admin-backend"
+            },
+            "presentation": {
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Admin Frontend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "admin-frontend"
+            },
+            "presentation": {
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Customer Backend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "customer-backend"
+            },
+            "presentation": {
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Customer Frontend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "customer-frontend"
+            },
+            "presentation": {
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Delivery Backend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "delivery-backend"
+            },
+            "presentation": {
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Delivery Frontend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "delivery-frontend"
+            },
+            "presentation": {
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Restaurant Backend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "restaurant-backend"
+            },
+            "presentation": {
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Restaurant Frontend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "restaurant-frontend"
+            },
+            "presentation": {
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Run All Services",
+            "type": "shell",
+            "command": "echo Starting all services...",
+            "dependsOn": [
+                "Admin Backend",
+                "Admin Frontend",
+                "Customer Backend",
+                "Customer Frontend",
+                "Delivery Backend",
+                "Delivery Frontend",
+                "Restaurant Backend",
+                "Restaurant Frontend"
+            ],
+            "dependsOrder": "parallel",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "never"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
