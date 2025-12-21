@@ -4,6 +4,7 @@ import { MenuCategory } from '../models/MenuCategory.js';
 import { Additive } from '../models/Additive.js';  // Stub provided below
 import { Extra } from '../models/Extra.js';  // Stub provided below
 import { findRestaurantByOwner } from '../models/Restaurant.js';
+import { Payout } from '../models/Payout.js'; // ✅ NEW
 
 // Helper: Get restaurant ID for current restaurant owner (fixed field)
 const getRestaurantId = async (restaurantOwnerId) => {
@@ -118,5 +119,129 @@ export const getRestaurantOwnerDashboardStats = async (req, res) => {
       success: false,
       message: 'Failed to load dashboard stats'
     });
+  }
+};
+
+// ✅ GET /api/dashboard/payouts-stats
+export const getPayoutStats = async (req, res) => {
+  try {
+    const restaurantOwnerId = req.restaurantOwner.id;
+    const restaurantId = await getRestaurantId(restaurantOwnerId);
+
+    if (!restaurantId) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+
+    // Calculate Total Revenue strictly from (subtotal + taxes) for delivered orders
+    const result = await Order.aggregate([
+      {
+        $match: {
+          restaurant: restaurantId,
+          status: 'delivered'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalDishPrice: { $sum: '$subtotal' }, // Sum of Dish Prices
+          totalTaxes: { $sum: '$taxes' },        // Sum of Taxes
+          totalRevenue: { $sum: { $add: ['$subtotal', '$taxes'] } } // Dish Price + Taxes
+        }
+      }
+    ]);
+
+    const stats = result[0] || { totalDishPrice: 0, totalTaxes: 0, totalRevenue: 0 };
+
+    // Calculate total already paid out
+    const payoutResult = await Payout.aggregate([
+      { $match: { restaurantId: restaurantId, status: 'Completed' } },
+      { $group: { _id: null, totalPaid: { $sum: '$amount' } } }
+    ]);
+
+    const totalPaid = payoutResult[0]?.totalPaid || 0;
+
+    // Pending payout = Total revenue - Total paid
+    const pendingPayout = stats.totalRevenue - totalPaid;
+
+    res.json({
+      success: true,
+      data: {
+        totalRevenue: stats.totalRevenue,
+        totalPaid: totalPaid,
+        pendingPayout: Math.max(0, pendingPayout), // Ensure non-negative
+        breakdown: {
+          dishPrice: stats.totalDishPrice,
+          taxes: stats.totalTaxes
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('getPayoutStats error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch payout stats' });
+  }
+};
+
+// ✅ POST /api/dashboard/collect-payout
+export const collectPayout = async (req, res) => {
+  try {
+    const restaurantOwnerId = req.restaurantOwner.id;
+    const restaurantId = await getRestaurantId(restaurantOwnerId);
+
+    if (!restaurantId) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+
+    const { amount, breakdown } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid payout amount' });
+    }
+
+    // Create payout record
+    const payout = new Payout({
+      restaurantId: restaurantId,
+      amount: amount,
+      breakdown: breakdown || {},
+      status: 'Completed',
+      transactionDate: new Date()
+    });
+
+    await payout.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Payout collected successfully',
+      data: payout
+    });
+
+  } catch (error) {
+    console.error('collectPayout error:', error);
+    res.status(500).json({ success: false, message: 'Failed to collect payout' });
+  }
+};
+
+// ✅ GET /api/dashboard/payout-history
+export const getPayoutHistory = async (req, res) => {
+  try {
+    const restaurantOwnerId = req.restaurantOwner.id;
+    const restaurantId = await getRestaurantId(restaurantOwnerId);
+
+    if (!restaurantId) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+
+    const payouts = await Payout.find({ restaurantId: restaurantId })
+      .sort({ transactionDate: -1 })
+      .limit(50); // Limit to recent 50 payouts
+
+    res.json({
+      success: true,
+      data: payouts
+    });
+
+  } catch (error) {
+    console.error('getPayoutHistory error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch payout history' });
   }
 };

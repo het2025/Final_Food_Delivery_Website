@@ -9,7 +9,8 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  BellIcon
+  BellIcon,
+  CreditCardIcon // ✅ NEW
 } from '@heroicons/react/24/outline';
 
 const Layout = () => {
@@ -23,6 +24,7 @@ const Layout = () => {
     { name: 'Users', href: '/users', icon: UsersIcon },
     { name: 'Restaurants', href: '/restaurants', icon: BuildingStorefrontIcon },
     { name: 'Restaurant Approvals', href: '/restaurants/pending', icon: BellIcon, badge: true },
+    { name: 'Bank Approvals', href: '/payouts/approvals', icon: CreditCardIcon }, // ✅ NEW
     { name: 'Orders', href: '/orders', icon: ShoppingCartIcon }
   ];
 
@@ -43,9 +45,8 @@ const Layout = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-30 w-64 bg-dark transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-dark transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex justify-between items-center px-6 h-16 bg-gray-900">
           <h1 className="text-xl font-bold text-white">QuickBite Admin</h1>
@@ -65,11 +66,10 @@ const Layout = () => {
                 key={item.name}
                 to={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center px-4 py-3 mt-2 rounded-lg transition-colors ${
-                  isActive
-                    ? 'text-white bg-primary'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
+                className={`flex items-center px-4 py-3 mt-2 rounded-lg transition-colors ${isActive
+                  ? 'text-white bg-primary'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
               >
                 <item.icon className="mr-3 w-6 h-6" />
                 <span>{item.name}</span>
@@ -116,17 +116,17 @@ const Layout = () => {
           >
             <Bars3Icon className="w-6 h-6" />
           </button>
-          
+
           <h2 className="text-xl font-semibold text-gray-800">
             {navigation.find(item => item.href === location.pathname)?.name || 'Admin Panel'}
           </h2>
-          
+
           <div className="text-sm text-gray-600">
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </div>
         </header>

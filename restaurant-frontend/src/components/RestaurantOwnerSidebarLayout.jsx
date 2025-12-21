@@ -5,7 +5,8 @@ import {
   ClipboardList,
   User,
   UtensilsCrossed,
-  LogOut
+  LogOut,
+  Wallet // ✅ NEW
 } from 'lucide-react';
 
 function RestaurantOwnerSidebarLayout() {
@@ -35,8 +36,7 @@ function RestaurantOwnerSidebarLayout() {
             to="/dashboard"
             end
             className={({ isActive }) =>
-              `flex items-center space-x-2 px-2 py-2 rounded ${
-                isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
+              `flex items-center space-x-2 px-2 py-2 rounded ${isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
               } hover:text-red-600 hover:bg-red-50`
             }
           >
@@ -48,8 +48,7 @@ function RestaurantOwnerSidebarLayout() {
           <NavLink
             to="/dashboard/orders"
             className={({ isActive }) =>
-              `flex items-center space-x-2 px-2 py-2 rounded ${
-                isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
+              `flex items-center space-x-2 px-2 py-2 rounded ${isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
               } hover:text-red-600 hover:bg-red-50`
             }
           >
@@ -61,8 +60,7 @@ function RestaurantOwnerSidebarLayout() {
           <NavLink
             to="/dashboard/menu"
             className={({ isActive }) =>
-              `flex items-center space-x-2 px-2 py-2 rounded ${
-                isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
+              `flex items-center space-x-2 px-2 py-2 rounded ${isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
               } hover:text-red-600 hover:bg-red-50`
             }
           >
@@ -70,12 +68,23 @@ function RestaurantOwnerSidebarLayout() {
             <span>Menu Management</span>
           </NavLink>
 
+          {/* ✅ Payouts (below Menu Management) */}
+          <NavLink
+            to="/dashboard/payouts"
+            className={({ isActive }) =>
+              `flex items-center space-x-2 px-2 py-2 rounded ${isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
+              } hover:text-red-600 hover:bg-red-50`
+            }
+          >
+            <Wallet size={20} />
+            <span>Payouts</span>
+          </NavLink>
+
           {/* Profile Settings */}
           <NavLink
             to="/dashboard/profile"
             className={({ isActive }) =>
-              `flex items-center gap-2 px-2 py-2 rounded ${
-                isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
+              `flex items-center gap-2 px-2 py-2 rounded ${isActive ? 'text-red-600 font-bold bg-red-50' : 'text-gray-700'
               } hover:text-red-600 hover:bg-red-50`
             }
           >

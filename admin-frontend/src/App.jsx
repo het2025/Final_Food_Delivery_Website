@@ -11,6 +11,7 @@ import RestaurantApprovals from './pages/RestaurantApprovals';
 import Orders from './pages/Orders';
 import OrderDetails from './pages/OrderDetails';
 import UserDetails from './pages/UserDetails';
+import AdminPayoutsPage from './pages/AdminPayoutsPage'; // ✅ NEW
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -33,6 +34,7 @@ function App() {
               <Route path="/users/:id" element={<UserDetails />} />
               <Route path="/restaurants" element={<Restaurants />} />
               <Route path="/restaurants/pending" element={<RestaurantApprovals />} />
+              <Route path="/payouts/approvals" element={<AdminPayoutsPage />} /> {/* ✅ NEW */}
               <Route path="/orders" element={<Orders />} />
               <Route path="/orders/:id" element={<OrderDetails />} />
             </Route>

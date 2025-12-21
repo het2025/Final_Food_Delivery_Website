@@ -350,24 +350,6 @@ function RestaurantOwnerOrdersPage() {
           </table>
         </div>
       </div>
-
-      {/* Revenue Section */}
-      <div className="flex justify-between items-center p-6 mt-10 bg-gradient-to-r from-green-100 to-white rounded-xl shadow-md">
-        <div>
-          <h3 className="text-lg font-semibold text-green-800">
-            Today's Revenue
-          </h3>
-          <p className="flex items-center mt-2 text-2xl font-bold text-green-700">
-            <IndianRupee className="mr-1" size={20} />
-            {todayRevenue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-          </p>
-        </div>
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/3075/3075977.png"
-          alt="Revenue"
-          className="w-16 h-16"
-        />
-      </div>
     </div>
   );
 }
