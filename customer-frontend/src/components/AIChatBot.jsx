@@ -1,20 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, Navigation } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, Navigation, Trash2 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
-const TypingMessage = ({ text, onComplete, children }) => {
-    const [displayedText, setDisplayedText] = useState('');
-    const [isTyping, setIsTyping] = useState(true);
+const TypingMessage = ({ text, onComplete, children, animate = true }) => {
+    const [displayedText, setDisplayedText] = useState(animate ? '' : text);
+    const [isTyping, setIsTyping] = useState(animate);
 
     useEffect(() => {
+        if (!animate) {
+            setDisplayedText(text);
+            setIsTyping(false);
+            return;
+        }
+
         let index = 0;
         setDisplayedText('');
         setIsTyping(true);
 
         const interval = setInterval(() => {
-            if (index < text.length) { // Use < instead of <= to match array indexing correctly
+            if (index < text.length) {
                 setDisplayedText((prev) => prev + text.charAt(index));
                 index++;
             } else {
@@ -22,10 +28,10 @@ const TypingMessage = ({ text, onComplete, children }) => {
                 setIsTyping(false);
                 if (onComplete) onComplete();
             }
-        }, 30); // 30ms per character
+        }, 30);
 
         return () => clearInterval(interval);
-    }, [text]); // Re-run if text changes
+    }, [text, animate]);
 
     return (
         <div>
@@ -57,6 +63,16 @@ const AIChatBot = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const handleClearChat = () => {
+        setMessages([{
+            id: Date.now(),
+            text: "Hello! I'm QuickBites AI. 🍔 ask me about restaurants, your orders, or what to eat!",
+            sender: 'ai',
+            timestamp: new Date(),
+            hasTyped: false
+        }]);
+    };
+
     useEffect(() => {
         scrollToBottom();
     }, [messages, isOpen]);
@@ -67,13 +83,29 @@ const AIChatBot = () => {
         }
     }, [isOpen]);
 
-    const handleSendMessage = async (e) => {
-        e?.preventDefault();
-        if (!inputText.trim() || isLoading) return;
+    const handleActionClick = (path) => {
+        setIsOpen(false);
+        navigate(path);
+    };
+
+    const suggestedPrompts = [
+        "📦 Track Order",
+        "🥗 Veg Options",
+        "🍔 Suggest Lunch",
+        "❓ Help"
+    ];
+
+    const handleChipClick = (prompt) => {
+        const text = prompt.replace(/^[\p{Emoji}\s]+/gu, '');
+        sendMessage(text);
+    };
+
+    const sendMessage = async (text) => {
+        if (!text.trim() || isLoading) return;
 
         const userMessage = {
             id: Date.now(),
-            text: inputText,
+            text: text,
             sender: 'user',
             timestamp: new Date()
         };
@@ -99,20 +131,16 @@ const AIChatBot = () => {
             const data = await response.json();
 
             if (data.success) {
-                // Check for navigation tags like [NAVIGATE:/url]
                 let replyText = data.reply;
                 let actions = [];
 
-                // Regex to find all [NAVIGATE:...] tags
                 const navRegex = /\[NAVIGATE:([^\]]+)\]/g;
                 let match;
 
-                // Extract all matches
                 while ((match = navRegex.exec(replyText)) !== null) {
-                    actions.push(match[1]); // Add URL/path to actions list
+                    actions.push(match[1]);
                 }
 
-                // Remove tags from display text
                 replyText = replyText.replace(navRegex, '').trim();
 
                 const aiMessage = {
@@ -120,7 +148,7 @@ const AIChatBot = () => {
                     text: replyText,
                     sender: 'ai',
                     timestamp: new Date(),
-                    actions: actions // Array of paths
+                    actions: actions
                 };
                 setMessages(prev => [...prev, aiMessage]);
             } else {
@@ -141,11 +169,6 @@ const AIChatBot = () => {
         }
     };
 
-    const handleActionClick = (path) => {
-        setIsOpen(false);
-        navigate(path);
-    };
-
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
             {/* Chat Window */}
@@ -155,7 +178,7 @@ const AIChatBot = () => {
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="w-[90vw] sm:w-[380px] h-[550px] bg-white rounded-2xl shadow-2xl mb-4 overflow-hidden border border-gray-100 flex flex-col pointer-events-auto"
+                        className="w-[90vw] sm:w-[380px] h-[550px] bg-white rounded-2xl shadow-2xl mb-4 overflow-hidden flex flex-col pointer-events-auto"
                     >
                         {/* Header */}
                         <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 pt-5 pb-5 text-white flex justify-between items-center shadow-md">
@@ -171,13 +194,23 @@ const AIChatBot = () => {
                                     </div>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                                aria-label="Close chat"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={handleClearChat}
+                                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                    aria-label="Clear chat"
+                                    title="Clear Chat"
+                                >
+                                    <Trash2 className="w-4 h-4 text-white/90" />
+                                </button>
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                    aria-label="Close chat"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Messages Area */}
@@ -200,7 +233,14 @@ const AIChatBot = () => {
                                         } ${msg.isError ? 'bg-red-50 text-red-600 border-red-100' : ''}`}>
 
                                         {msg.sender === 'ai' ? (
-                                            <TypingMessage text={msg.text} onComplete={scrollToBottom}>
+                                            <TypingMessage
+                                                text={msg.text}
+                                                animate={!msg.hasTyped}
+                                                onComplete={() => {
+                                                    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, hasTyped: true } : m));
+                                                    scrollToBottom();
+                                                }}
+                                            >
                                                 {/* Action Buttons inside TypingMessage to show AFTER typing */}
                                                 {msg.actions && msg.actions.length > 0 && (
                                                     <div className="mt-3 space-y-2">
@@ -236,6 +276,8 @@ const AIChatBot = () => {
                                         <span className={`text-[10px] mt-1 block opacity-60 ${msg.sender === 'user' ? 'text-orange-100' : 'text-gray-400'}`}>
                                             {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
+
+
                                     </div>
                                 </motion.div>
                             ))}
@@ -249,9 +291,24 @@ const AIChatBot = () => {
                             <div ref={messagesEndRef} />
                         </div>
 
+                        {/* Suggested Prompts (Chips) */}
+                        <div className="px-4 pb-2 bg-white flex gap-2 overflow-x-auto scrollbar-hide">
+                            {suggestedPrompts.map((prompt, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleChipClick(prompt)}
+                                    disabled={isLoading}
+                                    className="whitespace-nowrap px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs rounded-full transition-colors border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {prompt}
+                                </button>
+                            ))}
+                        </div>
+
                         {/* Input Area */}
                         <div className="p-4 bg-white border-t border-gray-100">
-                            <form onSubmit={handleSendMessage} className="flex gap-2">
+                            {/* Form uses sendMessage now? No, need to keep handleSendMessage for form, but refactor form submit */}
+                            <form onSubmit={(e) => { e.preventDefault(); sendMessage(inputText); }} className="flex gap-2">
                                 <input
                                     ref={inputRef}
                                     type="text"
