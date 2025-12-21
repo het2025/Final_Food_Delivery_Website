@@ -132,25 +132,30 @@ export const getPayoutStats = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Restaurant not found' });
     }
 
-    // Calculate Total Revenue strictly from (subtotal + taxes) for delivered orders
+    console.log('🔍 Calculating payouts for restaurantId:', restaurantId);
+
+    // Calculate Total Revenue from ALL orders
     const result = await Order.aggregate([
       {
         $match: {
-          restaurant: restaurantId,
-          status: 'delivered'
+          restaurant: restaurantId
         }
       },
       {
         $group: {
           _id: null,
-          totalDishPrice: { $sum: '$subtotal' }, // Sum of Dish Prices
-          totalTaxes: { $sum: '$taxes' },        // Sum of Taxes
-          totalRevenue: { $sum: { $add: ['$subtotal', '$taxes'] } } // Dish Price + Taxes
+          totalDishPrice: { $sum: { $ifNull: ['$subtotal', 0] } },
+          totalTaxes: { $sum: { $ifNull: ['$taxes', 0] } },
+          totalRevenue: { $sum: { $add: [{ $ifNull: ['$subtotal', 0] }, { $ifNull: ['$taxes', 0] }] } }
         }
       }
     ]);
 
+    console.log('📊 Order aggregation result:', JSON.stringify(result));
+
     const stats = result[0] || { totalDishPrice: 0, totalTaxes: 0, totalRevenue: 0 };
+
+    console.log('💰 Stats calculated:', stats);
 
     // Calculate total already paid out
     const payoutResult = await Payout.aggregate([
@@ -160,8 +165,12 @@ export const getPayoutStats = async (req, res) => {
 
     const totalPaid = payoutResult[0]?.totalPaid || 0;
 
+    console.log('💵 Total already paid:', totalPaid);
+
     // Pending payout = Total revenue - Total paid
     const pendingPayout = stats.totalRevenue - totalPaid;
+
+    console.log('✅ Pending payout:', pendingPayout);
 
     res.json({
       success: true,
