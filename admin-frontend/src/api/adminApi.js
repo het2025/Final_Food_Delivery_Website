@@ -42,7 +42,7 @@ export const dashboardAPI = {
 };
 
 export const usersAPI = {
-  getAll: (page = 1, limit = 20, search = '') => 
+  getAll: (page = 1, limit = 20, search = '') =>
     adminAPI.get(`/users?page=${page}&limit=${limit}&search=${search}`),
   getById: (id) => adminAPI.get(`/users/${id}`),
   updateStatus: (id, isActive) => adminAPI.put(`/users/${id}/status`, { isActive }),
@@ -66,8 +66,20 @@ export const ordersAPI = {
   getRestaurantOrders: (restaurantId, page = 1, limit = 20, status = '') =>
     adminAPI.get(`/orders/restaurant/${restaurantId}?page=${page}&limit=${limit}&status=${status}`),
   getById: (id) => adminAPI.get(`/orders/${id}`),
-  updateStatus: (id, status, notes = '') => 
+  updateStatus: (id, status, notes = '') =>
     adminAPI.put(`/orders/${id}/status`, { status, notes }),
   cancel: (id, reason) => adminAPI.put(`/orders/${id}/cancel`, { reason }),
   getStats: () => adminAPI.get('/orders/stats')
 };
+
+// ✅ NEW: Analytics API
+export const analyticsAPI = {
+  getOverview: () => adminAPI.get('/analytics/overview'),
+  getOrderStatus: () => adminAPI.get('/analytics/order-status'),
+  getOrdersTrend: (months = 6) => adminAPI.get(`/analytics/orders-trend?months=${months}`),
+  getOrdersByDay: () => adminAPI.get('/analytics/orders-by-day'),
+  getPeakHours: () => adminAPI.get('/analytics/peak-hours'),
+  getTopRestaurants: (limit = 10) => adminAPI.get(`/analytics/top-restaurants?limit=${limit}`),
+  getPaymentSplit: () => adminAPI.get('/analytics/payment-split')
+};
+

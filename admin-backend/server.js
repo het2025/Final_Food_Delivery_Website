@@ -10,6 +10,7 @@ import userRoutes from './routes/users.js';
 import restaurantRoutes from './routes/restaurants.js';
 import orderRoutes from './routes/orders.js';
 import payoutRoutes from './routes/adminPayoutRoutes.js'; // ✅ NEW: Payout routes
+import analyticsRoutes from './routes/adminAnalyticsRoutes.js'; // ✅ NEW: Analytics
 
 // Load environment variables
 dotenv.config();
@@ -66,6 +67,7 @@ app.use('/api/admin/users', userRoutes);
 app.use('/api/admin/restaurants', restaurantRoutes);
 app.use('/api/admin/orders', orderRoutes);
 app.use('/api/admin/payouts', payoutRoutes); // ✅ NEW: Payout routes
+app.use('/api/admin/analytics', analyticsRoutes); // ✅ NEW: Analytics routes
 
 // 404 handler
 app.use((req, res) => {

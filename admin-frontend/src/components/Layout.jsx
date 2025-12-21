@@ -10,7 +10,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   BellIcon,
-  CreditCardIcon // ✅ NEW
+  CreditCardIcon, // ✅ NEW
+  ChartBarIcon // ✅ NEW: Analytics
 } from '@heroicons/react/24/outline';
 
 const Layout = () => {
@@ -21,6 +22,7 @@ const Layout = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+    { name: 'Analytics', href: '/analytics', icon: ChartBarIcon }, // ✅ NEW
     { name: 'Users', href: '/users', icon: UsersIcon },
     { name: 'Restaurants', href: '/restaurants', icon: BuildingStorefrontIcon },
     { name: 'Restaurant Approvals', href: '/restaurants/pending', icon: BellIcon, badge: true },

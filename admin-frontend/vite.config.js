@@ -12,6 +12,9 @@ export default defineConfig({
       }
     }
   },
+  optimizeDeps: {
+    include: ['@mui/x-charts', 'd3-array', 'd3-scale', 'd3-format', 'd3-interpolate']
+  },
   css: {
     postcss: './postcss.config.js'
   }
