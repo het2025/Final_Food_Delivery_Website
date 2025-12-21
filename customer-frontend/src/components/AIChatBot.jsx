@@ -4,6 +4,37 @@ import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, Navigation } from
 import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
+const TypingMessage = ({ text, onComplete, children }) => {
+    const [displayedText, setDisplayedText] = useState('');
+    const [isTyping, setIsTyping] = useState(true);
+
+    useEffect(() => {
+        let index = 0;
+        setDisplayedText('');
+        setIsTyping(true);
+
+        const interval = setInterval(() => {
+            if (index < text.length) { // Use < instead of <= to match array indexing correctly
+                setDisplayedText((prev) => prev + text.charAt(index));
+                index++;
+            } else {
+                clearInterval(interval);
+                setIsTyping(false);
+                if (onComplete) onComplete();
+            }
+        }, 30); // 30ms per character
+
+        return () => clearInterval(interval);
+    }, [text]); // Re-run if text changes
+
+    return (
+        <div>
+            <p className="whitespace-pre-wrap">{displayedText}</p>
+            {!isTyping && children}
+        </div>
+    );
+};
+
 const AIChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
@@ -167,25 +198,38 @@ const AIChatBot = () => {
                                         ? 'bg-orange-500 text-white rounded-tr-none'
                                         : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
                                         } ${msg.isError ? 'bg-red-50 text-red-600 border-red-100' : ''}`}>
-                                        <p className="whitespace-pre-wrap">{msg.text}</p>
 
-                                        {/* Action Buttons if present */}
-                                        {msg.actions && msg.actions.length > 0 && (
+                                        {msg.sender === 'ai' ? (
+                                            <TypingMessage text={msg.text} onComplete={scrollToBottom}>
+                                                {/* Action Buttons inside TypingMessage to show AFTER typing */}
+                                                {msg.actions && msg.actions.length > 0 && (
+                                                    <div className="mt-3 space-y-2">
+                                                        {msg.actions.map((action, idx) => (
+                                                            <button
+                                                                key={idx}
+                                                                onClick={() => handleActionClick(action)}
+                                                                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors w-full text-xs font-semibold border border-blue-100 text-left animate-fade-in"
+                                                            >
+                                                                <Navigation className="w-3 h-3 flex-shrink-0" />
+                                                                <span className="truncate">
+                                                                    {action.includes('track-order') ? 'Track Order' :
+                                                                        action.includes('search=') ? `View ${decodeURIComponent(action.split('search=')[1])}` :
+                                                                            'Take me there'}
+                                                                </span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </TypingMessage>
+                                        ) : (
+                                            <p className="whitespace-pre-wrap">{msg.text}</p>
+                                        )}
+
+                                        {/* Fallback for User Messages to show actions if any (though unlikely for user) */}
+                                        {msg.sender === 'user' && msg.actions && msg.actions.length > 0 && (
                                             <div className="mt-3 space-y-2">
-                                                {msg.actions.map((action, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        onClick={() => handleActionClick(action)}
-                                                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors w-full text-xs font-semibold border border-blue-100 text-left"
-                                                    >
-                                                        <Navigation className="w-3 h-3 flex-shrink-0" />
-                                                        <span className="truncate">
-                                                            {action.includes('track-order') ? 'Track Order' :
-                                                                action.includes('search=') ? `View ${decodeURIComponent(action.split('search=')[1])}` :
-                                                                    'Take me there'}
-                                                        </span>
-                                                    </button>
-                                                ))}
+                                                {/* ... actions ... */}
+                                                {/* Simplified: User messages usually don't have actions in this flow */}
                                             </div>
                                         )}
 
